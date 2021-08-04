@@ -12,3 +12,5 @@ These files are used for the basic processing of the deep sequencing data to cal
    - [PacBio_runs.csv](PacBio_runs.csv): list of the PacBio runs used to call the variants.
 
    - [barcode_runs.csv](barcode_runs.csv): list of the Illumina runs used to count the barcodes for different samples.
+
+   - [CGGnaive_sites.csv](CGGnaive_sites.csv) provides a lookup table for converting from scFv CDS indexed site numbeirng to heavy/light chain IMGT numbering
