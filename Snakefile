@@ -45,7 +45,6 @@ rule make_summary:
     """Create Markdown summary of analysis."""
     input:
         dag=os.path.join(config['summary_dir'], 'dag.svg'),
-        get_mut_bind_expr=config['mut_bind_expr'],
         process_ccs=nb_markdown('process_ccs.ipynb'),
         barcode_variant_table=config['codon_variant_table_file'],
         variant_counts_file=config['variant_counts_file'],
@@ -222,17 +221,34 @@ rule process_ccs:
 
 if config['seqdata_source'] == 'HutchServer':
 
-    rule get_ccs:
-        """Symbolically link CCS files."""
+    rule build_ccs:
+        """Run PacBio ``ccs`` program to build CCSs from subreads."""
         input:
-            ccs_fastq=lambda wildcards: (pacbio_runs
+            subreads=lambda wildcards: (pacbio_runs
                                         .set_index('pacbioRun')
-                                        .at[wildcards.pacbioRun, 'ccs']
+                                        .at[wildcards.pacbioRun, 'subreads']
                                         )
         output:
+            ccs_report=os.path.join(config['ccs_dir'], "{pacbioRun}_report.txt"),
             ccs_fastq=os.path.join(config['ccs_dir'], "{pacbioRun}_ccs.fastq.gz")
-        run:
-            os.symlink(input.ccs_fastq, output.ccs_fastq)
+        params:
+            min_ccs_length=config['min_ccs_length'],
+            max_ccs_length=config['max_ccs_length'],
+            min_ccs_passes=config['min_ccs_passes'],
+            min_ccs_accuracy=config['min_ccs_accuracy']
+        threads: config['max_cpus']
+        shell:
+            """
+            ccs \
+                --min-length {params.min_ccs_length} \
+                --max-length {params.max_ccs_length} \
+                --min-passes {params.min_ccs_passes} \
+                --min-rq {params.min_ccs_accuracy} \
+                --report-file {output.ccs_report} \
+                --num-threads {threads} \
+                {input.subreads} \
+                {output.ccs_fastq}
+            """
 
 elif config['seqdata_source'] == 'SRA':
     raise RuntimeError('getting sequence data from SRA not yet implemented')

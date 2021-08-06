@@ -24,6 +24,8 @@ barcode_runs: data/barcode_runs.csv
 # wildtype sequence of mutagenized gene
 wildtype_sequence: data/wildtype_sequence.fasta
 
+#target for mapping codon variant table (sort of redundant, but in code for when we have other unmutated targets spiked in lib)
+primary_target: CGG_naive
 
 # output directories / files
 summary_dir: results/summary

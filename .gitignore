@@ -16,7 +16,7 @@ results/*
 
 !results/variants
 results/variants/*
-!results/variants/codon_variant_table_*.csv
+!results/variants/codon_variant_table.csv
 
 !results/counts
 results/counts/*

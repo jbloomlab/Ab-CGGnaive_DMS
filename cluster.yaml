@@ -7,23 +7,12 @@ __default__:
   name: "{rule}"
   constraint: '"gizmog|gizmoj|gizmok"'
 
+build_ccs:
+  cpus: 8
+  time: 4-0
+  mem: 100000
 
-process_ccs_Wuhan_Hu_1:
-  cpus: 4
-  time: 1-0
-  mem: 250000
-  
-process_ccs_E484K:
-  cpus: 4
-  time: 1-0
-  mem: 250000
-  
-process_ccs_N501Y:
-  cpus: 4
-  time: 1-0
-  mem: 250000
-  
-process_ccs_B1351:
+process_ccs:
   cpus: 4
   time: 1-0
   mem: 250000

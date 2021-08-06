@@ -1,4 +1,4 @@
-LOCUS       PacBio_amplicon         1181 bp    DNA        linear       03-AUG-2021
+LOCUS       CGG_naive         1181 bp    DNA        linear       03-AUG-2021
 DEFINITION  PacBio amplicon for deep mutational scanning of CGGnaive scFv
 ACCESSION   None
 SOURCE      Tyler Starr
@@ -39,7 +39,7 @@ FEATURES             Location/Qualifiers
                      /ApEinfo_revcolor="green"
                      /ApEinfo_graphicformat="arrow_data {{0 1 2 0 0 -1} {} 0}
                      width 5 offset 0"
-     misc_feature    34..738
+     gene            34..738
                      /locus_tag="gene"
                      /label="gene"
                      /ApEinfo_label="gene"
