@@ -1,10 +1,10 @@
 Compute per-barcode expression functional score
 ================
 Tyler Starr
-7/12/2021
+8/6/2021
 
 This notebook reads in per-barcode counts from `count_variants.ipynb`
-for expression Sort-seq experiments, computes functional scores for RBD
+for expression Sort-seq experiments, computes functional scores for scFv
 expression levels, and does some basic QC on variant expression
 functional scores.
 
@@ -40,7 +40,7 @@ sessionInfo()
 
     ## R version 3.6.2 (2019-12-12)
     ## Platform: x86_64-pc-linux-gnu (64-bit)
-    ## Running under: Ubuntu 18.04.5 LTS
+    ## Running under: Ubuntu 18.04.4 LTS
     ## 
     ## Matrix products: default
     ## BLAS/LAPACK: /app/software/OpenBLAS/0.3.7-GCC-8.3.0/lib/libopenblas_haswellp-r0.3.7.so
@@ -181,13 +181,13 @@ calc.MLmean <- function(b1,b2,b3,b4,min.b1,min.b2,min.b3,min.b4,max.b4,min.count
 #fit ML mean and sd fluorescence for each barcode, and calculate total cell count as the sum across the four bins. Multiply cell counts by a factor of 20 to minimize rounding errors since fitdistcens requires rounding to integer inputs
 invisible(dt[library=="lib1",c("expression","ML_sdF") := tryCatch(calc.MLmean(b1=SortSeq_bin1*20,b2=SortSeq_bin2*20,
                                                                       b3=SortSeq_bin3*20,b4=SortSeq_bin4*20,
-                                                                      min.b1=log(20),min.b2=log(663.5),min.b3=log(7116.5),
-                                                                      min.b4=log(23056.5),max.b4=log(229000)),
+                                                                      min.b1=log(20),min.b2=log(645.5),min.b3=log(15584.5),
+                                                                      min.b4=log(33302.5),max.b4=log(229000)),
                                                           error=function(e){return(list(as.numeric(NA),as.numeric(NA)))}),by=c("library","barcode")])
 invisible(dt[library=="lib2",c("expression","ML_sdF") := tryCatch(calc.MLmean(b1=SortSeq_bin1*20,b2=SortSeq_bin2*20,
                                                                       b3=SortSeq_bin3*20,b4=SortSeq_bin4*20,
-                                                                      min.b1=log(20),min.b2=log(663.5),min.b3=log(6061.5),
-                                                                      min.b4=log(19926.5),max.b4=log(229000)),
+                                                                      min.b1=log(20),min.b2=log(645.5),min.b3=log(15584.5),
+                                                                      min.b4=log(33302.5),max.b4=log(229000)),
                                                           error=function(e){return(list(as.numeric(NA),as.numeric(NA)))}),by=c("library","barcode")])
 
 #save temp data file for downstream troubleshooting since the ML meanF took >1hr to calculate -- don't use these for final anlaysis though for reproducibility!
@@ -222,6 +222,12 @@ hist(log10(dt[library=="lib2" & !is.na(expression),expr_count]+0.1),xlab="cell c
 ```
 
 <img src="compute_expression_meanF_files/figure-gfm/cell_count_coverage-1.png" style="display: block; margin: auto;" />
+Filter out expression measurements determined from \<10 estimated cells
+
+``` r
+min_count <- 10
+dt[expr_count<min_count, c("expression","ML_sdF","expr_count") := NA]
+```
 
 Do as violin plots, faceted by each target. In next notebook, we’ll
 evaluate count depth and possibly apply further filtering to remove
@@ -243,7 +249,7 @@ grid.arrange(p1,ncol=1)
 invisible(dev.print(pdf, paste(config$expression_sortseq_dir,"/violin-plot_meanF-by-target.pdf",sep="")))
 ```
 
-We have generated expression measurements for 97.45% of the barcodes in
+We have generated expression measurements for 90.98% of the barcodes in
 our libraries.
 
 ## Data Output

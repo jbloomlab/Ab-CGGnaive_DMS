@@ -1,14 +1,14 @@
 ---
 title: "Compute per-barcode expression functional score"
 author: "Tyler Starr"
-date: "7/12/2021"
+date: "8/6/2021"
 output:
   github_document:
     html_preview: false
 editor_options: 
   chunk_output_type: inline
 ---
-This notebook reads in per-barcode counts from `count_variants.ipynb` for expression Sort-seq experiments, computes functional scores for RBD expression levels, and does some basic QC on variant expression functional scores.
+This notebook reads in per-barcode counts from `count_variants.ipynb` for expression Sort-seq experiments, computes functional scores for scFv expression levels, and does some basic QC on variant expression functional scores.
 
 ```{r setup, message=FALSE, warning=FALSE, error=FALSE}
 require("knitr")
@@ -113,13 +113,13 @@ calc.MLmean <- function(b1,b2,b3,b4,min.b1,min.b2,min.b3,min.b4,max.b4,min.count
 #fit ML mean and sd fluorescence for each barcode, and calculate total cell count as the sum across the four bins. Multiply cell counts by a factor of 20 to minimize rounding errors since fitdistcens requires rounding to integer inputs
 invisible(dt[library=="lib1",c("expression","ML_sdF") := tryCatch(calc.MLmean(b1=SortSeq_bin1*20,b2=SortSeq_bin2*20,
                                                                       b3=SortSeq_bin3*20,b4=SortSeq_bin4*20,
-                                                                      min.b1=log(20),min.b2=log(663.5),min.b3=log(7116.5),
-                                                                      min.b4=log(23056.5),max.b4=log(229000)),
+                                                                      min.b1=log(20),min.b2=log(645.5),min.b3=log(15584.5),
+                                                                      min.b4=log(33302.5),max.b4=log(229000)),
                                                           error=function(e){return(list(as.numeric(NA),as.numeric(NA)))}),by=c("library","barcode")])
 invisible(dt[library=="lib2",c("expression","ML_sdF") := tryCatch(calc.MLmean(b1=SortSeq_bin1*20,b2=SortSeq_bin2*20,
                                                                       b3=SortSeq_bin3*20,b4=SortSeq_bin4*20,
-                                                                      min.b1=log(20),min.b2=log(663.5),min.b3=log(6061.5),
-                                                                      min.b4=log(19926.5),max.b4=log(229000)),
+                                                                      min.b1=log(20),min.b2=log(645.5),min.b3=log(15584.5),
+                                                                      min.b4=log(33302.5),max.b4=log(229000)),
                                                           error=function(e){return(list(as.numeric(NA),as.numeric(NA)))}),by=c("library","barcode")])
 
 #save temp data file for downstream troubleshooting since the ML meanF took >1hr to calculate -- don't use these for final anlaysis though for reproducibility!
@@ -146,11 +146,18 @@ hist(log10(dt[library=="lib1" & !is.na(expression),expr_count]+0.1),xlab="cell c
 hist(log10(dt[library=="lib2" & !is.na(expression),expr_count]+0.1),xlab="cell count (log10, plus 0.1 pseudocount)",main="lib2, determined",col="gray50")
 
 ```
+Filter out expression measurements determined from <10 estimated cells
+
+```{r filter_min_cfu}
+min_count <- 10
+dt[expr_count<min_count, c("expression","ML_sdF","expr_count") := NA]
+
+```
 
 
 Do as violin plots, faceted by each target. In next notebook, we'll evaluate count depth and possibly apply further filtering to remove low-count expression estimates
 
-```{r expression_distribution_vioplot, echo=T, fig.width=6, fig.height=18, fig.align="center", dpi=300,dev="png"}
+```{r expression_distribution_vioplot, echo=T, fig.width=6, fig.height=4.5, fig.align="center", dpi=300,dev="png"}
 p1 <- ggplot(dt[!is.na(expression),],aes(x=variant_class,y=expression))+
   geom_violin(scale="width")+stat_summary(fun=median,geom="point",size=1)+
   ggtitle("expression")+xlab("variant class")+theme(axis.text.x=element_text(angle=-90,hjust=0))+

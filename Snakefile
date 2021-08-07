@@ -51,8 +51,8 @@ rule make_summary:
         count_variants=nb_markdown('count_variants.ipynb'),
         fit_titrations='results/summary/compute_binding_Kd.md',
         variant_Kds_file=config['Titeseq_Kds_file'],
-        fit_PSR_curves='results/summary/compute_binding_PSR.md',
-        variant_PSR_file=config['PSR_EC50s_file'],
+        #fit_PSR_curves='results/summary/compute_binding_PSR.md',
+        #variant_PSR_file=config['PSR_EC50s_file'],
         calculate_expression='results/summary/compute_expression_meanF.md',
         variant_expression_file=config['expression_sortseq_file'],
         collapse_scores='results/summary/collapse_scores.md',
@@ -86,7 +86,7 @@ rule make_summary:
 
             3. [Fit CGG-binding titration curves]({path(input.fit_titrations)}) to calculate per-barcode K<sub>D</sub>, recorded in [this file]({path(input.variant_Kds_file)}).
 
-            4. [Fit PSR-binding curves]({path(input.fit_PSR_curves)}) to calculate per-barcode polyspecificity score, recorded in [this file]({path(input.variant_PSR_file)}).
+            #4. [Fit PSR-binding curves]({path(input.fit_PSR_curves)}) to calculate per-barcode polyspecificity score, recorded in [this file]({path(input.variant_PSR_file)}).
             
             5. [Analyze Sort-seq]({path(input.calculate_expression)}) to calculate per-barcode RBD expression, recorded in [this file]({path(input.variant_expression_file)}).
             
@@ -110,7 +110,7 @@ rule collapse_scores:
     input:
         config['Titeseq_Kds_file'],
         config['expression_sortseq_file'],
-        config['PSR_EC50s_file']
+        #config['PSR_EC50s_file']
     output:
         config['final_variant_scores_mut_file'],
         md='results/summary/collapse_scores.md',
@@ -149,26 +149,26 @@ rule fit_titrations:
         mv {params.md_files} {output.md_files}
         """
 
-rule fit_PSR_curves:
-    input:
-        config['codon_variant_table_file'],
-        config['variant_counts_file']
-    output:
-        config['PSR_EC50s_file'],
-        md='results/summary/compute_binding_PSR.md',
-        md_files=directory('results/summary/compute_binding_PSR_files')
-    envmodules:
-        'R/3.6.2-foss-2019b'
-    params:
-        nb='compute_binding_PSR.Rmd',
-        md='compute_binding_PSR.md',
-        md_files='compute_binding_PSR_files'
-    shell:
-        """
-        R -e \"rmarkdown::render(input=\'{params.nb}\')\";
-        mv {params.md} {output.md};
-        mv {params.md_files} {output.md_files}
-        """
+#rule fit_PSR_curves:
+#    input:
+#        config['codon_variant_table_file'],
+#        config['variant_counts_file']
+#    output:
+#        config['PSR_EC50s_file'],
+#        md='results/summary/compute_binding_PSR.md',
+#        md_files=directory('results/summary/compute_binding_PSR_files')
+#    envmodules:
+#        'R/3.6.2-foss-2019b'
+#    params:
+#        nb='compute_binding_PSR.Rmd',
+#        md='compute_binding_PSR.md',
+#        md_files='compute_binding_PSR_files'
+#    shell:
+#        """
+#        R -e \"rmarkdown::render(input=\'{params.nb}\')\";
+#        mv {params.md} {output.md};
+#        mv {params.md_files} {output.md_files}
+#        """
 
 rule calculate_expression:
     input:
