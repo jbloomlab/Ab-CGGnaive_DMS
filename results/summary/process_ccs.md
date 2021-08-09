@@ -223,6 +223,123 @@ print(targets.feature_parse_specs('yaml'))
     
 
 
+## CCS stats for PacBio runs
+Read data frame with information on PacBio runs:
+
+
+```python
+pacbio_runs = (
+    pd.read_csv(config['pacbio_runs'], dtype=str)
+    .drop(columns=['subreads'])
+    .assign(name=lambda x: x['library'] + '_' + x['run'],
+            fastq=lambda x: config['ccs_dir'] + '/' + x['name'] + '_ccs.fastq.gz'
+            )
+    )
+
+# we only have report files on the Hutch server, not for SRA download
+if config['seqdata_source'] == 'HutchServer':
+    pacbio_runs = (
+        pacbio_runs
+        .assign(report=lambda x: config['ccs_dir'] + '/' + x['name'] + '_report.txt')
+        )
+    report_col = 'report'
+elif config['seqdata_source'] == 'SRA':
+    report_col = None
+else:
+    raise ValueError(f"invalid `seqdata_source` {config['seqdata_source']}")
+
+display(HTML(pacbio_runs.to_html(index=False)))
+```
+
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>library</th>
+      <th>run</th>
+      <th>name</th>
+      <th>fastq</th>
+      <th>report</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>lib1</td>
+      <td>210619</td>
+      <td>lib1_210619</td>
+      <td>results/ccs/lib1_210619_ccs.fastq.gz</td>
+      <td>results/ccs/lib1_210619_report.txt</td>
+    </tr>
+    <tr>
+      <td>lib2</td>
+      <td>210619</td>
+      <td>lib2_210619</td>
+      <td>results/ccs/lib2_210619_ccs.fastq.gz</td>
+      <td>results/ccs/lib2_210619_report.txt</td>
+    </tr>
+  </tbody>
+</table>
+
+
+Create an object that summarizes the `ccs` runs:
+
+
+```python
+ccs_summaries = alignparse.ccs.Summaries(pacbio_runs,
+                                         report_col=report_col,
+                                         ncpus=config['max_cpus'],
+                                         )
+```
+
+If available, plot statistics on the number of ZMWs for each run:
+
+
+```python
+if ccs_summaries.has_zmw_stats():
+    p = ccs_summaries.plot_zmw_stats()
+    p = p + theme(panel_grid_major_x=element_blank())  # no vertical grid lines
+    _ = p.draw()
+else:
+    print('No ZMW stats available.')
+```
+
+
+    
+![png](process_ccs_files/process_ccs_28_0.png)
+    
+
+
+Plot statistics on generated CCSs: their length, number of subread passes, and accuracy (as reported by the `ccs` program):
+
+
+```python
+for variable in ['length', 'passes', 'accuracy']:
+    if ccs_summaries.has_stat(variable):
+        p = ccs_summaries.plot_ccs_stats(variable, maxcol=7, bins=25)
+        p = p + theme(panel_grid_major_x=element_blank())  # no vertical grid lines
+        _ = p.draw()
+    else:
+        print(f"No {variable} statistics available.")
+```
+
+
+    
+![png](process_ccs_files/process_ccs_30_0.png)
+    
+
+
+
+    
+![png](process_ccs_files/process_ccs_30_1.png)
+    
+
+
+
+    
+![png](process_ccs_files/process_ccs_30_2.png)
+    
+
+
 ## Align CCSs to amplicons
 We now align the CCSs to the amplicon and parse features from the resulting alignments using the specs above.
 
@@ -294,7 +411,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_30_0.png)
+![png](process_ccs_files/process_ccs_38_0.png)
     
 
 
@@ -322,7 +439,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_32_0.png)
+![png](process_ccs_files/process_ccs_40_0.png)
     
 
 
@@ -348,7 +465,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_34_0.png)
+![png](process_ccs_files/process_ccs_42_0.png)
     
 
 
@@ -377,7 +494,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_36_0.png)
+![png](process_ccs_files/process_ccs_44_0.png)
     
 
 
@@ -427,7 +544,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_40_0.png)
+![png](process_ccs_files/process_ccs_48_0.png)
     
 
 
@@ -719,7 +836,7 @@ _ = (
 
 
     
-![png](process_ccs_files/process_ccs_57_0.png)
+![png](process_ccs_files/process_ccs_65_0.png)
     
 
 
@@ -759,7 +876,7 @@ _ = (
 
 
     
-![png](process_ccs_files/process_ccs_61_0.png)
+![png](process_ccs_files/process_ccs_69_0.png)
     
 
 
@@ -797,7 +914,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_63_0.png)
+![png](process_ccs_files/process_ccs_71_0.png)
     
 
 
@@ -851,7 +968,7 @@ _ = (
 
 
     
-![png](process_ccs_files/process_ccs_67_0.png)
+![png](process_ccs_files/process_ccs_75_0.png)
     
 
 
@@ -1008,7 +1125,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_73_1.png)
+![png](process_ccs_files/process_ccs_81_1.png)
     
 
 
@@ -1198,7 +1315,7 @@ _ = (
 
 
     
-![png](process_ccs_files/process_ccs_82_0.png)
+![png](process_ccs_files/process_ccs_90_0.png)
     
 
 
@@ -1263,7 +1380,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_84_1.png)
+![png](process_ccs_files/process_ccs_92_1.png)
     
 
 
@@ -1428,7 +1545,7 @@ _ = (
 
 
     
-![png](process_ccs_files/process_ccs_90_0.png)
+![png](process_ccs_files/process_ccs_98_0.png)
     
 
 
@@ -1526,7 +1643,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_98_0.png)
+![png](process_ccs_files/process_ccs_106_0.png)
     
 
 
@@ -1555,13 +1672,13 @@ for mut_type in ['aa', 'codon']:
 
 
     
-![png](process_ccs_files/process_ccs_100_1.png)
+![png](process_ccs_files/process_ccs_108_1.png)
     
 
 
 
     
-![png](process_ccs_files/process_ccs_100_2.png)
+![png](process_ccs_files/process_ccs_108_2.png)
     
 
 
@@ -1584,7 +1701,7 @@ p.save(plotfile)
 
 
     
-![png](process_ccs_files/process_ccs_102_1.png)
+![png](process_ccs_files/process_ccs_110_1.png)
     
 
 
@@ -1604,7 +1721,7 @@ _ = p.draw()
 
 
     
-![png](process_ccs_files/process_ccs_104_0.png)
+![png](process_ccs_files/process_ccs_112_0.png)
     
 
 
@@ -1630,13 +1747,13 @@ for variant_type in ['all', 'single']:
 
 
     
-![png](process_ccs_files/process_ccs_106_1.png)
+![png](process_ccs_files/process_ccs_114_1.png)
     
 
 
 
     
-![png](process_ccs_files/process_ccs_106_2.png)
+![png](process_ccs_files/process_ccs_114_2.png)
     
 
 
@@ -1865,13 +1982,13 @@ for variant_type in ['all', 'single']:
 
 
     
-![png](process_ccs_files/process_ccs_110_0.png)
+![png](process_ccs_files/process_ccs_118_0.png)
     
 
 
 
     
-![png](process_ccs_files/process_ccs_110_1.png)
+![png](process_ccs_files/process_ccs_118_1.png)
     
 
 
@@ -1888,13 +2005,13 @@ for mut_type in ['aa', 'codon']:
 
 
     
-![png](process_ccs_files/process_ccs_112_0.png)
+![png](process_ccs_files/process_ccs_120_0.png)
     
 
 
 
     
-![png](process_ccs_files/process_ccs_112_1.png)
+![png](process_ccs_files/process_ccs_120_1.png)
     
 
 
