@@ -1,17 +1,14 @@
----
-title: "Compute per-barcode polyspecificity reactivity"
-author: "Tyler Starr"
-date: "8/9/2021"
-output:
-  github_document:
-    html_preview: false
-editor_options: 
-  chunk_output_type: inline
----
+Compute per-barcode polyspecificity reactivity
+================
+Tyler Starr
+8/9/2021
 
-This notebook reads in per-barcode counts from `count_variants.ipynb` for PSR-binding mini-Tite-seq experiments, computes functional scores for binding of each barcoded variant to the PSR reagent, and does some basic QC on variant binding functional scores.
+This notebook reads in per-barcode counts from `count_variants.ipynb`
+for PSR-binding mini-Tite-seq experiments, computes functional scores
+for binding of each barcoded variant to the PSR reagent, and does some
+basic QC on variant binding functional scores.
 
-```{r setup, message=FALSE, warning=FALSE, error=FALSE}
+``` r
 require("knitr")
 knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
@@ -34,15 +31,61 @@ if(!file.exists(config$PSR_bind_dir)){
   dir.create(file.path(config$PSR_bind_dir))
 }
 ```
+
 Session info for reproducing environment:
-```{r print_sessionInfo}
+
+``` r
 sessionInfo()
 ```
 
-## Setup
-First, we will read in metadata on our sort samples, the table giving number of reads of each barcode in each of the sort bins, and the barcode-variant lookup tables, and merge these tables together.
+    ## R version 3.6.2 (2019-12-12)
+    ## Platform: x86_64-pc-linux-gnu (64-bit)
+    ## Running under: Ubuntu 18.04.5 LTS
+    ## 
+    ## Matrix products: default
+    ## BLAS/LAPACK: /app/software/OpenBLAS/0.3.7-GCC-8.3.0/lib/libopenblas_haswellp-r0.3.7.so
+    ## 
+    ## locale:
+    ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+    ##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+    ##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+    ##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+    ##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+    ## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+    ## 
+    ## attached base packages:
+    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
+    ## 
+    ## other attached packages:
+    ##  [1] fitdistrplus_1.0-14 npsurv_0.4-0        lsei_1.2-0         
+    ##  [4] survival_3.1-8      MASS_7.3-51.4       gridExtra_2.3      
+    ##  [7] forcats_0.4.0       stringr_1.4.0       dplyr_0.8.3        
+    ## [10] purrr_0.3.3         readr_1.3.1         tidyr_1.0.0        
+    ## [13] tibble_3.0.2        ggplot2_3.3.0       tidyverse_1.3.0    
+    ## [16] data.table_1.12.8   yaml_2.2.0          knitr_1.26         
+    ## 
+    ## loaded via a namespace (and not attached):
+    ##  [1] tidyselect_1.1.0 xfun_0.11        lattice_0.20-38  splines_3.6.2   
+    ##  [5] haven_2.2.0      colorspace_1.4-1 vctrs_0.3.1      generics_0.0.2  
+    ##  [9] htmltools_0.4.0  rlang_0.4.7      pillar_1.4.5     glue_1.3.1      
+    ## [13] withr_2.1.2      DBI_1.1.0        dbplyr_1.4.2     modelr_0.1.5    
+    ## [17] readxl_1.3.1     lifecycle_0.2.0  munsell_0.5.0    gtable_0.3.0    
+    ## [21] cellranger_1.1.0 rvest_0.3.5      evaluate_0.14    fansi_0.4.0     
+    ## [25] broom_0.7.0      Rcpp_1.0.3       scales_1.1.0     backports_1.1.5 
+    ## [29] jsonlite_1.6     fs_1.3.1         hms_0.5.2        digest_0.6.23   
+    ## [33] stringi_1.4.3    grid_3.6.2       cli_2.0.0        tools_3.6.2     
+    ## [37] magrittr_1.5     crayon_1.3.4     pkgconfig_2.0.3  Matrix_1.2-18   
+    ## [41] ellipsis_0.3.0   xml2_1.2.2       reprex_0.3.0     lubridate_1.7.4 
+    ## [45] assertthat_0.2.1 rmarkdown_2.0    httr_1.4.1       rstudioapi_0.10 
+    ## [49] R6_2.4.1         compiler_3.6.2
 
-```{r input_data}
+## Setup
+
+First, we will read in metadata on our sort samples, the table giving
+number of reads of each barcode in each of the sort bins, and the
+barcode-variant lookup tables, and merge these tables together.
+
+``` r
 #read dataframe with list of barcode runs
 barcode_runs <- read.csv(file=config$barcode_runs,stringsAsFactors=F); barcode_runs <- subset(barcode_runs, select=-c(R1))
 
@@ -61,9 +104,11 @@ dt <- data.table(read.csv(file=config$codon_variant_table_file,stringsAsFactors=
 dt <- merge(counts, dt, by=c("library","barcode")) ;rm(counts)
 ```
 
- Convert from Illumina read counts to estimates of the number of cells that were sorted into a bin, and add some other useful information to our data frame.
- 
-```{r downweight_counts_by_cells}
+Convert from Illumina read counts to estimates of the number of cells
+that were sorted into a bin, and add some other useful information to
+our data frame.
+
+``` r
 #for each bin, normalize the read counts to the observed ratio of cell recovery among bins
 for(i in 1:nrow(barcode_runs)){
   lib <- as.character(barcode_runs$library[i])
@@ -77,7 +122,50 @@ for(i in 1:nrow(barcode_runs)){
     print(paste("read:cell ratio for",lib,bin,"is",ratio))
   }
 }
+```
 
+    ## [1] "read:cell ratio for lib1 PSR_01_bin1 is 1.57243383447812"
+    ## [1] "read:cell ratio for lib1 PSR_01_bin2 is 2.32407956705449"
+    ## [1] "read:cell ratio for lib1 PSR_01_bin3 is 3.37123210237748"
+    ## [1] "read:cell ratio for lib1 PSR_01_bin4 is 2.72613275657003"
+    ## [1] "reads < cells for lib1 PSR_02_bin1 , un-normalized (ratio 0.940529459739458 )"
+    ## [1] "read:cell ratio for lib1 PSR_02_bin2 is 2.28305598361071"
+    ## [1] "read:cell ratio for lib1 PSR_02_bin3 is 2.43843184320322"
+    ## [1] "read:cell ratio for lib1 PSR_02_bin4 is 2.81314184753935"
+    ## [1] "read:cell ratio for lib1 PSR_03_bin1 is 1.45030816520287"
+    ## [1] "read:cell ratio for lib1 PSR_03_bin2 is 3.31879633215544"
+    ## [1] "read:cell ratio for lib1 PSR_03_bin3 is 2.85277036272405"
+    ## [1] "read:cell ratio for lib1 PSR_03_bin4 is 2.38708195264742"
+    ## [1] "read:cell ratio for lib1 PSR_04_bin1 is 2.96465768136888"
+    ## [1] "read:cell ratio for lib1 PSR_04_bin2 is 2.98846249088557"
+    ## [1] "read:cell ratio for lib1 PSR_04_bin3 is 2.91401908258126"
+    ## [1] "read:cell ratio for lib1 PSR_04_bin4 is 1.7215320038435"
+    ## [1] "read:cell ratio for lib1 PSR_05_bin1 is 1.85102450512718"
+    ## [1] "read:cell ratio for lib1 PSR_05_bin2 is 1.05934297037091"
+    ## [1] "read:cell ratio for lib1 PSR_05_bin3 is 63.6852846401719"
+    ## [1] "read:cell ratio for lib1 PSR_05_bin4 is 3.56976744186047"
+    ## [1] "reads < cells for lib2 PSR_01_bin1 , un-normalized (ratio 0.692336859298437 )"
+    ## [1] "read:cell ratio for lib2 PSR_01_bin2 is 1.71868189728174"
+    ## [1] "read:cell ratio for lib2 PSR_01_bin3 is 3.03222347795569"
+    ## [1] "read:cell ratio for lib2 PSR_01_bin4 is 3.01919223471977"
+    ## [1] "read:cell ratio for lib2 PSR_02_bin1 is 1.33665288942407"
+    ## [1] "read:cell ratio for lib2 PSR_02_bin2 is 1.98367055773351"
+    ## [1] "read:cell ratio for lib2 PSR_02_bin3 is 1.61105753630358"
+    ## [1] "read:cell ratio for lib2 PSR_02_bin4 is 1.6573819701649"
+    ## [1] "reads < cells for lib2 PSR_03_bin1 , un-normalized (ratio 0.51233946464694 )"
+    ## [1] "reads < cells for lib2 PSR_03_bin2 , un-normalized (ratio 0.532098574465292 )"
+    ## [1] "read:cell ratio for lib2 PSR_03_bin3 is 1.98201112501093"
+    ## [1] "reads < cells for lib2 PSR_03_bin4 , un-normalized (ratio 0.925218885773819 )"
+    ## [1] "reads < cells for lib2 PSR_04_bin1 , un-normalized (ratio 0.918073316609049 )"
+    ## [1] "reads < cells for lib2 PSR_04_bin2 , un-normalized (ratio 0.720167360293554 )"
+    ## [1] "read:cell ratio for lib2 PSR_04_bin3 is 2.9446942880954"
+    ## [1] "read:cell ratio for lib2 PSR_04_bin4 is 2.97597233221684"
+    ## [1] "read:cell ratio for lib2 PSR_05_bin1 is 2.87730585306538"
+    ## [1] "read:cell ratio for lib2 PSR_05_bin2 is 2.51438700383372"
+    ## [1] "read:cell ratio for lib2 PSR_05_bin3 is 6.418410041841"
+    ## [1] "reads < cells for lib2 PSR_05_bin4 , un-normalized (ratio 0.560975609756098 )"
+
+``` r
 #annotate each barcode as to whether it's a homolog variant, SARS-CoV-2 wildtype, synonymous muts only, stop, nonsynonymous, >1 nonsynonymous mutations
 dt[,variant_class:=as.character(NA)]
 dt[n_codon_substitutions==0, variant_class := "wildtype"]
@@ -88,19 +176,26 @@ dt[n_aa_substitutions > 1 & !grepl("*",aa_substitutions,fixed=T), variant_class 
 
 #cast the data frame into wide format
 dt <- dcast(dt, library + barcode + target + variant_class + aa_substitutions + n_aa_substitutions ~ sample, value.var="count.norm")
-
 ```
 
 ## Calculating mean bin for each barcode at each sample concentration
-Next, for each barcode at each of the PSR concentrations, calculate the "mean bin" response variable. We will use a maximum likelihood approach to determine the mean and standard deviation of fluorescence for a barcode, given its distribution of cell counts across sort bins, and the known fluorescence boundaries of those sort bins from the sorting log. The package `fitdistcens` enables this ML estimation for these type of *censored* observations, where we know we observed a cell within some fluorescence interval but do not know the exact fluorescence value attributed to that observation. The counts are multiplied by 20 so that there is not a large rounding effect when they are rounded to integers.
+
+Next, for each barcode at each of the PSR concentrations, calculate the
+“mean bin” response variable. We will use a maximum likelihood approach
+to determine the mean and standard deviation of fluorescence for a
+barcode, given its distribution of cell counts across sort bins, and the
+known fluorescence boundaries of those sort bins from the sorting log.
+The package `fitdistcens` enables this ML estimation for these type of
+*censored* observations, where we know we observed a cell within some
+fluorescence interval but do not know the exact fluorescence value
+attributed to that observation. The counts are multiplied by 20 so that
+there is not a large rounding effect when they are rounded to integers.
 
 Fluorescence boundaries of the sort bins
 
-```
-(-288, 183), (184, 892), (893, 3892), (3893, 262143)
-```
+    (-288, 183), (184, 892), (893, 3892), (3893, 262143)
 
-```{r calculate_mean_bin, error=FALSE, message=FALSE, warning=FALSE, results=F}
+``` r
 #add total count corresponding to count across the four bins for each barcode. 
 dt[,psr_count_01 := sum(PSR_01_bin1,PSR_01_bin2,PSR_01_bin3,PSR_01_bin4),by=c("library","barcode")]
 #add indicator if count>1 in >1 bin
@@ -179,16 +274,19 @@ save(dt,file=paste(config$PSR_bind_dir,"/dt.temp.Rda",sep=""))
 
 ## Basic plotting and QC
 
-Some stop variants eked through our scFv+ selection gate, remove the remaining.
-```{r remove_stops}
+Some stop variants eked through our scFv+ selection gate, remove the
+remaining.
+
+``` r
 dt[variant_class == "stop",c("polyspecificity_01","polyspecificity_02","polyspecificity_03","polyspecificity_04","polyspecificity_05") := list(as.numeric(NA),as.numeric(NA),as.numeric(NA),as.numeric(NA),as.numeric(NA))]
 
 dt[variant_class == "stop",c("psr_count_01","psr_count_02","psr_count_03","psr_count_04","psr_count_05") := list(as.numeric(NA),as.numeric(NA),as.numeric(NA),as.numeric(NA),as.numeric(NA))]
 ```
 
-Let's look at the distibution of expression scores by variant class for each library.
+Let’s look at the distibution of expression scores by variant class for
+each library.
 
-```{r unfiltered_polyspecificity_distribution, echo=T, fig.width=5, fig.height=15, fig.align="center", dpi=300,dev="png"}
+``` r
 par(mfrow=c(5,1))
 #histogram of mean psr bin, separated by class
 hist(dt[variant_class %in% (c("1 nonsynonymous",">1 nonsynonymous")),polyspecificity_01],col="gray40",main="",breaks=50,xlab="PSR labeling (1x)")
@@ -207,9 +305,12 @@ hist(dt[variant_class %in% (c("1 nonsynonymous",">1 nonsynonymous")),polyspecifi
 hist(dt[variant_class %in% (c("synonymous","wildtype")),polyspecificity_05],col="#92278F",add=T,breaks=50)
 ```
 
+<img src="compute_binding_PSR_files/figure-gfm/unfiltered_polyspecificity_distribution-1.png" style="display: block; margin: auto;" />
 
-Next let's look at the distributon of cell counts across the four bins for each barcode. 
-```{r cell_count_coverage, echo=T, fig.width=5, fig.height=15, fig.align="center", dpi=300,dev="png"}
+Next let’s look at the distributon of cell counts across the four bins
+for each barcode.
+
+``` r
 #histograms
 par(mfrow=c(5,1))
 hist(log10(dt[,psr_count_01]+0.1),xlab="",main="1x",col="gray50")
@@ -217,51 +318,61 @@ hist(log10(dt[,psr_count_02]+0.1),xlab="",main="0.316x",col="gray50")
 hist(log10(dt[,psr_count_03]+0.1),xlab="",main="0.1x",col="gray50")
 hist(log10(dt[,psr_count_04]+0.1),xlab="",main="0.0316x",col="gray50")
 hist(log10(dt[,psr_count_05]+0.1),xlab="cell count (log10, plus 0.1 pc)",main="0x",col="gray50")
-
 ```
-Filter out expression measurements determined from <10 estimated cells
 
-```{r filter_min_cfu}
+<img src="compute_binding_PSR_files/figure-gfm/cell_count_coverage-1.png" style="display: block; margin: auto;" />
+Filter out expression measurements determined from \<10 estimated cells
+
+``` r
 min_count <- 10
 dt[psr_count_01<min_count, c("polyspecificity_01","psr_count_01") := NA]
 dt[psr_count_02<min_count, c("polyspecificity_02","psr_count_02") := NA]
 dt[psr_count_03<min_count, c("polyspecificity_03","psr_count_03") := NA]
 dt[psr_count_04<min_count, c("polyspecificity_04","psr_count_04") := NA]
 dt[psr_count_05<min_count, c("polyspecificity_05","psr_count_05") := NA]
-
 ```
 
-Look at correlations in PSR labeling for each of the five concentrations of PSR reagent.
+Look at correlations in PSR labeling for each of the five concentrations
+of PSR reagent.
 
-```{r psr_conc_correlations, echo=T, fig.width=15, fig.height=15, fig.align="center", dpi=300,dev="png"}
+``` r
 pairs(dt[,.(polyspecificity_01,polyspecificity_02,polyspecificity_03,polyspecificity_04,polyspecificity_05)], main="",pch=19,col="#00000010")
-
-invisible(dev.print(pdf, paste(config$PSR_bind_dir,"/correlations_PSR_concentrations.pdf",sep=""),useDingbats=F))
-
 ```
 
-Look at PSR 02 as violin plots, faceted by each target. In next notebook, we'll evaluate count depth and possibly apply further filtering to remove low-count expression estimates
+<img src="compute_binding_PSR_files/figure-gfm/psr_conc_correlations-1.png" style="display: block; margin: auto;" />
 
-```{r psr_distribution_vioplot, echo=T, fig.width=6, fig.height=4.5, fig.align="center", dpi=300,dev="png"}
+``` r
+invisible(dev.print(pdf, paste(config$PSR_bind_dir,"/correlations_PSR_concentrations.pdf",sep=""),useDingbats=F))
+```
+
+Look at PSR 02 as violin plots, faceted by each target. In next
+notebook, we’ll evaluate count depth and possibly apply further
+filtering to remove low-count expression estimates
+
+``` r
 p1 <- ggplot(dt[!is.na(polyspecificity_02),],aes(x=variant_class,y=polyspecificity_02))+
   geom_violin(scale="width")+stat_summary(fun=median,geom="point",size=1)+
   ggtitle("polyspecificity (0.316x PSR)")+xlab("variant class")+theme(axis.text.x=element_text(angle=-90,hjust=0))+
   facet_wrap(~target,nrow=4)
 
 grid.arrange(p1,ncol=1)
+```
 
+<img src="compute_binding_PSR_files/figure-gfm/psr_distribution_vioplot-1.png" style="display: block; margin: auto;" />
+
+``` r
 #save pdf
 invisible(dev.print(pdf, paste(config$PSR_bind_dir,"/violin-plot_PSR-by-target.pdf",sep="")))
 ```
 
-
-We have generated PSR binding measurements for `r round(nrow(dt[!is.na(polyspecificity_02)])/nrow(dt)*100,digits=2)`% of the barcodes in our libraries. (0.316x PSR)
+We have generated PSR binding measurements for 78.15% of the barcodes in
+our libraries. (0.316x PSR)
 
 ## Data Output
 
-Finally, let's output our measurements for downstream analyses.
+Finally, let’s output our measurements for downstream analyses.
 
-```{r output_data}
+``` r
 dt[,.(library,barcode,target,variant_class,aa_substitutions,n_aa_substitutions,
      psr_count_01,polyspecificity_01,
      psr_count_02,polyspecificity_02,
@@ -270,8 +381,4 @@ dt[,.(library,barcode,target,variant_class,aa_substitutions,n_aa_substitutions,
      psr_count_05,polyspecificity_05)] %>%
   mutate_if(is.numeric, round, digits=6) %>%
   write.csv(file=config$PSR_bind_file, row.names=F)
-
 ```
-
-
-

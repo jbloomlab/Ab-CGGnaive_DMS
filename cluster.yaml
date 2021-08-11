@@ -26,8 +26,22 @@ calculate_expression:
   cpus: 8
   time: 1-0
   mem: 100000
+  constraint: gizmok
 
 fit_titrations:
   cpus: 4
   time: 1-0
   mem: 100000
+  constraint: gizmok
+
+calculate_PSR_binding:
+  cpus: 8
+  time: 1-0
+  mem: 100000
+  constraint: gizmok
+  
+collapse_scores:
+  cpus: 4
+  time: 1-0
+  mem: 32000
+  constraint: gizmok

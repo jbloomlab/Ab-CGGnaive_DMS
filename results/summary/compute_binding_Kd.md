@@ -40,7 +40,7 @@ sessionInfo()
 
     ## R version 3.6.2 (2019-12-12)
     ## Platform: x86_64-pc-linux-gnu (64-bit)
-    ## Running under: Ubuntu 18.04.5 LTS
+    ## Running under: Ubuntu 18.04.4 LTS
     ## 
     ## Matrix products: default
     ## BLAS/LAPACK: /app/software/OpenBLAS/0.3.7-GCC-8.3.0/lib/libopenblas_haswellp-r0.3.7.so
@@ -332,16 +332,16 @@ issues such as nls convergence.
 ``` r
 par(mfrow=c(2,2))
 hist(log10(dt[library=="lib1" & !is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=20,xlim=c(0,5),main="lib1",col="gray50",xlab="average cell count across concentration samples")
-hist(log10(dt[library=="lib1" & is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=20,add=T,col="red")
+hist(log10(dt[library=="lib1" & is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=30,add=T,col="red")
 
 hist(log10(dt[library=="lib2" & !is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=20,xlim=c(0,5),main="lib2",col="gray50",xlab="average cell count across concentration samples")
-hist(log10(dt[library=="lib2" & is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=20,add=T,col="red")
+hist(log10(dt[library=="lib2" & is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=30,add=T,col="red")
 
 hist(dt[library=="lib1" & !is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=5,main="lib1",col="gray50",xlab="number of sample concentrations below cutoff cell number",xlim=c(0,10))
-hist(dt[library=="lib1" & is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=16,add=T,col="red")
+hist(dt[library=="lib1" & is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=20,add=T,col="red")
 
 hist(dt[library=="lib2" & !is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=5,main="lib2",col="gray50",xlab="number of sample concentrations below cutoff cell number",xlim=c(0,10))
-hist(dt[library=="lib2" & is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=16,add=T,col="red")
+hist(dt[library=="lib2" & is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=20,add=T,col="red")
 ```
 
 <img src="compute_binding_Kd_files/figure-gfm/avgcount-1.png" style="display: block; margin: auto;" />
@@ -400,15 +400,11 @@ hist(log10(dt[variant_class %in% (c("synonymous","wildtype")),Kd_CGG]),col="#922
 invisible(dev.print(pdf, paste(config$Titeseq_Kds_dir,"/hist_Kd-per-barcode.pdf",sep="")))
 ```
 
-Remove stops; make curve examples spanning the titraiton range; look at
-curves at different average count depths and # missing values. nMSRs.
-Then cutoff by nMSR, output final values
-
-Some stop variants eked through our RBD+ selection, either perhaps
-because of stop codon readthrough, improper PacBio sequence annotation,
-or other weirdness. Either way, the vast majority of nonsense mutants
-were purged before this step, and the remaining ones are biased toward
-unreliable and so we remove them.
+Some stop variants eked through our scFv+ gating, either perhaps because
+of stop codon readthrough, improper PacBio sequence annotation, or other
+weirdness. Either way, the vast majority of nonsense mutants were purged
+before this step, and the remaining ones are biased toward unreliable
+and so we remove them.
 
 ``` r
 #remove stop variants, which even if they eke through, either a) still have low counts and give poor fits as a result, or b) seem to be either dubious PacBio calls (lower variant_call_support) or have late stop codons which perhaps don't totally ablate funciton. Either way, the vast majority were purged before this step and we don't want to deal with the remaining ones!
@@ -418,89 +414,121 @@ dt[variant_class == "stop",c("Kd_CGG","Kd_SE_CGG","response_CGG","baseline_CGG",
 Let’s take a look at some of the curves with *K*<sub>D,app</sub> values
 across this distribution to get a broad sense of how things look.
 
-First, curves with *K*<sub>D,app</sub> fixed at the 10<sup>-5</sup>
-maximum. We can see these are all flat-lined curves with no response.
+First, curves with *K*<sub>D,app</sub> around 10<sup>-6</sup> (because
+of nonspecific background signal, which we partially deplete, all curves
+rise at the higher titration concentrations so nothign gets fit to the
+imposed fit maximum 10^-5). These curves are noisy background and are
+truly expected to be non-binders.
 
 ``` r
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 9e-6)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 9e-6)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 9e-6)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 9e-6)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[2])
 ```
 
-Next, with *K*<sub>D,app</sub> around 10<sup>-6</sup>
+<img src="compute_binding_Kd_files/figure-gfm/1e-6_Kd-1.png" style="display: block; margin: auto;" />
+
+With *K*<sub>D,app</sub> around 10<sup>-7</sup>, still substantial noise
+in the curves, would not reliably call any of these binders compared to
+those above at 10^-6.
 
 ``` r
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[2])
 ```
 
-With *K*<sub>D,app</sub> around 10<sup>-7</sup>, we seem to be picking
-up more consistent binding signals, though there are some noisy curves.
+<img src="compute_binding_Kd_files/figure-gfm/1e-7_Kd-1.png" style="display: block; margin: auto;" />
+
+At *K*<sub>D,app</sub> of 10<sup>-8</sup>, it seems we’re beginning to
+pick up genuine curves with weaker binding
 
 ``` r
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[2])
 ```
 
-At *K*<sub>D,app</sub> of 10<sup>-8</sup>, we are likewise picking up
-some signal, perhaps a bit less noise than the -8 curves
+<img src="compute_binding_Kd_files/figure-gfm/1e-8_Kd-1.png" style="display: block; margin: auto;" />
+
+Same at *K*<sub>D,app</sub> of 10<sup>-9</sup>, looking pretty good.
 
 ``` r
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[2])
 ```
 
-Same at *K*<sub>D,app</sub> of 10<sup>-9</sup>.
+<img src="compute_binding_Kd_files/figure-gfm/1e-9_Kd-1.png" style="display: block; margin: auto;" />
+
+*K*<sub>D,app</sub> of 10<sup>-10</sup>, is beginning to move into the
+‘mode’ of most mutant binding
 
 ``` r
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[2])
 ```
 
-*K*<sub>D,app</sub> of 10<sup>-10</sup>
+<img src="compute_binding_Kd_files/figure-gfm/1e-10_Kd-1.png" style="display: block; margin: auto;" />
+*K*<sub>D,app</sub> of 10<sup>-10.5</sup>, is toward the mode including
+of WT binders. Curves look quite nice.
 
 ``` r
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 3.1e-11 & dt$Kd_CGG < 3.2e-11)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 3.1e-11 & dt$Kd_CGG < 3.2e-11)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 3.1e-11 & dt$Kd_CGG < 3.2e-11)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 3.1e-11 & dt$Kd_CGG < 3.2e-11)[2])
 ```
 
+<img src="compute_binding_Kd_files/figure-gfm/1e-10.5_Kd-1.png" style="display: block; margin: auto;" />
 *K*<sub>D,app</sub> \~ 10<sup>-11</sup>. This is just past the wt-like
 ‘mode’ of binding affinity
 
 ``` r
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[2])
 ```
+
+<img src="compute_binding_Kd_files/figure-gfm/1e-11_Kd-1.png" style="display: block; margin: auto;" />
+
+*K*<sub>D,app</sub> \~ 10<sup>-11.5</sup>.
+
+``` r
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 3.1e-12 & dt$Kd_CGG < 3.2e-12)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 3.1e-12 & dt$Kd_CGG < 3.2e-12)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 3.1e-12 & dt$Kd_CGG < 3.2e-12)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 3.1e-12 & dt$Kd_CGG < 3.2e-12)[2])
+```
+
+<img src="compute_binding_Kd_files/figure-gfm/1e-11.5_Kd-1.png" style="display: block; margin: auto;" />
 
 *K*<sub>D,app</sub> \~ 10<sup>-12</sup>.
 
 ``` r
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[2])
 ```
+
+<img src="compute_binding_Kd_files/figure-gfm/1e-12_Kd-1.png" style="display: block; margin: auto;" />
 
 ## Data filtering by fit quality
 

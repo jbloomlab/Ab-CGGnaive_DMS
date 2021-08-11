@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
 
 #list of packages to install/load
-packages = c("yaml","data.table","tidyverse","gridExtra","egg")
+packages = c("yaml","data.table","tidyverse","gridExtra","egg","seqinr")
 #install any packages not already installed
 installed_packages <- packages %in% rownames(installed.packages())
 if(any(installed_packages == F)){
@@ -48,7 +48,7 @@ sessionInfo()
 
     ## R version 3.6.2 (2019-12-12)
     ## Platform: x86_64-pc-linux-gnu (64-bit)
-    ## Running under: Ubuntu 18.04.5 LTS
+    ## Running under: Ubuntu 18.04.4 LTS
     ## 
     ## Matrix products: default
     ## BLAS/LAPACK: /app/software/OpenBLAS/0.3.7-GCC-8.3.0/lib/libopenblas_haswellp-r0.3.7.so
@@ -65,10 +65,10 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] egg_0.4.5         gridExtra_2.3     forcats_0.4.0     stringr_1.4.0    
-    ##  [5] dplyr_0.8.3       purrr_0.3.3       readr_1.3.1       tidyr_1.0.0      
-    ##  [9] tibble_3.0.2      ggplot2_3.3.0     tidyverse_1.3.0   data.table_1.12.8
-    ## [13] yaml_2.2.0        knitr_1.26       
+    ##  [1] seqinr_3.6-1      egg_0.4.5         gridExtra_2.3     forcats_0.4.0    
+    ##  [5] stringr_1.4.0     dplyr_0.8.3       purrr_0.3.3       readr_1.3.1      
+    ##  [9] tidyr_1.0.0       tibble_3.0.2      ggplot2_3.3.0     tidyverse_1.3.0  
+    ## [13] data.table_1.12.8 yaml_2.2.0        knitr_1.26       
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] tidyselect_1.1.0 xfun_0.11        haven_2.2.0      colorspace_1.4-1
@@ -78,11 +78,12 @@ sessionInfo()
     ## [17] munsell_0.5.0    gtable_0.3.0     cellranger_1.1.0 rvest_0.3.5     
     ## [21] evaluate_0.14    fansi_0.4.0      broom_0.7.0      Rcpp_1.0.3      
     ## [25] scales_1.1.0     backports_1.1.5  jsonlite_1.6     fs_1.3.1        
-    ## [29] hms_0.5.2        digest_0.6.23    stringi_1.4.3    grid_3.6.2      
-    ## [33] cli_2.0.0        tools_3.6.2      magrittr_1.5     crayon_1.3.4    
-    ## [37] pkgconfig_2.0.3  ellipsis_0.3.0   xml2_1.2.2       reprex_0.3.0    
-    ## [41] lubridate_1.7.4  assertthat_0.2.1 rmarkdown_2.0    httr_1.4.1      
-    ## [45] rstudioapi_0.10  R6_2.4.1         compiler_3.6.2
+    ## [29] hms_0.5.2        digest_0.6.23    stringi_1.4.3    ade4_1.7-13     
+    ## [33] grid_3.6.2       cli_2.0.0        tools_3.6.2      magrittr_1.5    
+    ## [37] crayon_1.3.4     pkgconfig_2.0.3  MASS_7.3-51.4    ellipsis_0.3.0  
+    ## [41] xml2_1.2.2       reprex_0.3.0     lubridate_1.7.4  assertthat_0.2.1
+    ## [45] rmarkdown_2.0    httr_1.4.1       rstudioapi_0.10  R6_2.4.1        
+    ## [49] compiler_3.6.2
 
 ## Setup
 
@@ -92,8 +93,9 @@ combine.
 ``` r
 dt_bind <- data.table(read.csv(config$Titeseq_Kds_file),stringsAsFactors=F)
 dt_expr <- data.table(read.csv(config$expression_sortseq_file),stringsAsFactors=F)
+dt_psr <- data.table(read.csv(config$PSR_bind_file),stringsAsFactors=F)
 
-dt <- merge(dt_bind,dt_expr)
+dt <- merge(merge(dt_bind,dt_expr),dt_psr)
 ```
 
 ## Calculate per-variant mean scores within replicates
@@ -105,6 +107,7 @@ determined in each library.
 ``` r
 dt[is.na(log10Ka),TiteSeq_avgcount:=NA]
 dt[is.na(expression),expr_count:=NA]
+dt[is.na(polyspecificity_02),psr_count_02:=NA]
 
 dt[,mean_bind:=median(log10Ka,na.rm=T),by=c("library","target","variant_class","aa_substitutions")]
 dt[,sd_bind:=sd(log10Ka,na.rm=T),by=c("library","target","variant_class","aa_substitutions")]
@@ -116,21 +119,32 @@ dt[,sd_expr:=sd(expression,na.rm=T),by=c("library","target","variant_class","aa_
 dt[,n_bc_expr:=sum(!is.na(expression)),by=c("library","target","variant_class","aa_substitutions")]
 dt[,avg_count_expr:=mean(expr_count,na.rm=T),by=c("library","target","variant_class","aa_substitutions")]
 
-dt <- unique(dt[,.(library,target,variant_class,aa_substitutions,n_aa_substitutions,mean_bind,sd_bind,n_bc_bind,avg_count_bind,mean_expr,sd_expr,n_bc_expr,avg_count_expr)])
+dt[,mean_psr:=median(polyspecificity_02,na.rm=T),by=c("library","target","variant_class","aa_substitutions")]
+dt[,sd_psr:=sd(polyspecificity_02,na.rm=T),by=c("library","target","variant_class","aa_substitutions")]
+dt[,n_bc_psr:=sum(!is.na(polyspecificity_02)),by=c("library","target","variant_class","aa_substitutions")]
+dt[,avg_count_psr:=mean(psr_count_02,na.rm=T),by=c("library","target","variant_class","aa_substitutions")]
+
+dt <- unique(dt[,.(library,target,variant_class,aa_substitutions,n_aa_substitutions,
+                   mean_bind,sd_bind,n_bc_bind,avg_count_bind,
+                   mean_expr,sd_expr,n_bc_expr,avg_count_expr,
+                   mean_psr, sd_psr, n_bc_psr, avg_count_psr)])
 ```
 
 Some QC plots. First, look at distribution of number barcodes for
-binding and expression measurements for single mutant detemrinations.
-These are ‘left-justified’ histograms, so the leftmost bar represents
-the number of genotypes for which no barcodes were collapsed to final
-measurement in a pool. (Currently, includes mutations within the linker)
+binding, expression, polyspecificity measurements for single mutant
+detemrinations. These are ‘left-justified’ histograms, so the leftmost
+bar represents the number of genotypes for which no barcodes were
+collapsed to final measurement in a pool. (Currently, includes mutations
+within the linker)
 
 ``` r
-par(mfrow=c(2,2))
+par(mfrow=c(3,2))
 hist(dt[library=="lib1" & variant_class=="1 nonsynonymous",n_bc_bind],main="lib1, bind",right=F,breaks=max(dt[library=="lib1" & variant_class=="1 nonsynonymous",n_bc_bind],na.rm=T),xlab="")
 hist(dt[library=="lib2" & variant_class=="1 nonsynonymous",n_bc_bind],main="lib2, bind",right=F,breaks=max(dt[library=="lib2" & variant_class=="1 nonsynonymous",n_bc_bind],na.rm=T),xlab="")
 hist(dt[library=="lib1" & variant_class=="1 nonsynonymous",n_bc_expr],main="lib1, expr",right=F,breaks=max(dt[library=="lib1" & variant_class=="1 nonsynonymous",n_bc_expr],na.rm=T),xlab="number barcodes collapsed")
 hist(dt[library=="lib2" & variant_class=="1 nonsynonymous",n_bc_expr],main="lib2, expr",right=F,breaks=max(dt[library=="lib2" & variant_class=="1 nonsynonymous",n_bc_expr],na.rm=T),xlab="number barcodes collapsed")
+hist(dt[library=="lib1" & variant_class=="1 nonsynonymous",n_bc_psr],main="lib1, psr",right=F,breaks=max(dt[library=="lib1" & variant_class=="1 nonsynonymous",n_bc_psr],na.rm=T),xlab="number barcodes collapsed")
+hist(dt[library=="lib2" & variant_class=="1 nonsynonymous",n_bc_psr],main="lib2, psr",right=F,breaks=max(dt[library=="lib2" & variant_class=="1 nonsynonymous",n_bc_psr],na.rm=T),xlab="number barcodes collapsed")
 ```
 
 <img src="collapse_scores_files/figure-gfm/hist_n_bc_per_mutant-1.png" style="display: block; margin: auto;" />
@@ -146,7 +160,7 @@ error on the median’ that could be used/kept in the table for
 downstream)
 
 ``` r
-par(mfrow=c(2,2))
+par(mfrow=c(3,2))
 plot(dt[library=="lib1" & variant_class=="1 nonsynonymous",n_bc_bind],
      dt[library=="lib1" & variant_class=="1 nonsynonymous",sd_bind/sqrt(n_bc_bind)],
      pch=19,col="#00000005",main="lib1, bind",ylab="SEM",xlab="number barcodes collapsed")
@@ -159,6 +173,12 @@ plot(dt[library=="lib1" & variant_class=="1 nonsynonymous",n_bc_expr],
 plot(dt[library=="lib2" & variant_class=="1 nonsynonymous",n_bc_expr],
      dt[library=="lib2" & variant_class=="1 nonsynonymous",sd_expr/sqrt(n_bc_expr)],
      pch=19,col="#00000005",main="lib2, expr",ylab="SEM",xlab="number barcodes collapsed")
+plot(dt[library=="lib1" & variant_class=="1 nonsynonymous",n_bc_psr],
+     dt[library=="lib1" & variant_class=="1 nonsynonymous",sd_psr/sqrt(n_bc_psr)],
+     pch=19,col="#00000005",main="lib1, psr",ylab="SEM",xlab="number barcodes collapsed")
+plot(dt[library=="lib2" & variant_class=="1 nonsynonymous",n_bc_psr],
+     dt[library=="lib2" & variant_class=="1 nonsynonymous",sd_psr/sqrt(n_bc_psr)],
+     pch=19,col="#00000005",main="lib2, psr",ylab="SEM",xlab="number barcodes collapsed")
 ```
 
 <img src="collapse_scores_files/figure-gfm/sem_v_n-bc-1.png" style="display: block; margin: auto;" />
@@ -182,7 +202,10 @@ split_mut <- function(x){
 }
 dt_mutant[,c("wildtype","position","mutant"):=split_mut(as.character(aa_substitutions)),by=aa_substitutions]
 
-dt_mutant <- dt_mutant[,.(library,target,wildtype,position,mutant,mean_bind,sd_bind,n_bc_bind,avg_count_bind,mean_expr,sd_expr,n_bc_expr,avg_count_expr)]
+dt_mutant <- dt_mutant[,.(library,target,wildtype,position,mutant,
+                          mean_bind,sd_bind,n_bc_bind,avg_count_bind,
+                          mean_expr,sd_expr,n_bc_expr,avg_count_expr,
+                          mean_psr, sd_psr, n_bc_psr, avg_count_psr)]
 
 aas <- c("A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y")
 #fill out missing values in table with a hideous loop, so the table is complete for all mutaitons (including those that are missing). If you are somebody who is reading this code, I apologize.
@@ -201,7 +224,12 @@ setkey(dt_mutant,library,target,position,mutant)
 
 #fill in wildtype values -- should vectorize in data table but being so stupid so just going to write for loop
 for(lib in c("lib1","lib2")){
-  dt_mutant[library==lib & wildtype==mutant, c("mean_bind","sd_bind","n_bc_bind","avg_count_bind","mean_expr","sd_expr","n_bc_expr","avg_count_expr"):=dt[library==lib & variant_class=="wildtype",.(mean_bind,sd_bind,n_bc_bind,avg_count_bind,mean_expr,sd_expr,n_bc_expr,avg_count_expr)]]
+  dt_mutant[library==lib & wildtype==mutant, c("mean_bind","sd_bind","n_bc_bind","avg_count_bind",
+                                               "mean_expr","sd_expr","n_bc_expr","avg_count_expr",
+                                               "mean_psr", "sd_psr", "n_bc_psr", "avg_count_psr"):=
+              dt[library==lib & variant_class=="wildtype",.(mean_bind,sd_bind,n_bc_bind,avg_count_bind,
+                                                            mean_expr,sd_expr,n_bc_expr,avg_count_expr,
+                                                            mean_psr, sd_psr, n_bc_psr, avg_count_psr)]]
 }
 
 
@@ -209,8 +237,10 @@ for(lib in c("lib1","lib2")){
 for(lib in c("lib1","lib2")){
   ref_bind <- dt[library==lib & variant_class=="wildtype",mean_bind]
   ref_expr <- dt[library==lib & variant_class=="wildtype",mean_expr]
+  ref_psr <-  dt[library==lib & variant_class=="wildtype",mean_psr]
   dt_mutant[library==lib,delta_bind := mean_bind - ref_bind]
   dt_mutant[library==lib,delta_expr := mean_expr - ref_expr]
+  dt_mutant[library==lib,delta_psr := mean_psr - ref_psr]
 }
 ```
 
@@ -220,10 +250,12 @@ and lower n_bcs, and use that to determine if I need to filter for a
 minimum number of collapsed bcs
 
 ``` r
-par(mfrow=c(1,2))
+par(mfrow=c(1,3))
 x <- dt_mutant[library=="lib1" & wildtype!=mutant & !(position %in% 113:127),mean_expr]; y <- dt_mutant[library=="lib2" & wildtype!=mutant & !(position %in% 113:127),mean_expr]; plot(x,y,pch=19,col="#00000020",xlab="replicate 1",ylab="replicate 2",main="expression");model <- lm(y~x);abline(model,lty=2,col="red");legend("topleft",legend=paste("R2: ",round(summary(model)$r.squared,3),sep=""),bty="n")
 
-x <- dt_mutant[library=="lib1" & wildtype!=mutant & !(position %in% 113:127),mean_bind]; y <- dt_mutant[library=="lib2" & wildtype!=mutant  & !(position %in% 113:127),mean_bind]; plot(x,y,pch=19,col="#00000020",xlab="replicate 1",ylab="replicate 2",main="binding affinity");model <- lm(y~x);abline(model,lty=2,col="red");legend("topleft",legend=paste("R2: ",round(summary(model)$r.squared,3),sep=""),bty="n")
+x <- dt_mutant[library=="lib1" & wildtype!=mutant & !(position %in% 113:127),mean_bind]; y <- dt_mutant[library=="lib2" & wildtype!=mutant  & !(position %in% 113:127),mean_bind]; plot(x,y,pch=19,col="#00000020",xlab="replicate 1",ylab="replicate 2",main="CGG binding affinity");model <- lm(y~x);abline(model,lty=2,col="red");legend("topleft",legend=paste("R2: ",round(summary(model)$r.squared,3),sep=""),bty="n")
+
+x <- dt_mutant[library=="lib1" & wildtype!=mutant & !(position %in% 113:127),mean_psr]; y <- dt_mutant[library=="lib2" & wildtype!=mutant  & !(position %in% 113:127),mean_psr]; plot(x,y,pch=19,col="#00000020",xlab="replicate 1",ylab="replicate 2",main="polyspecificity reactivity");model <- lm(y~x);abline(model,lty=2,col="red");legend("topleft",legend=paste("R2: ",round(summary(model)$r.squared,3),sep=""),bty="n")
 ```
 
 <img src="collapse_scores_files/figure-gfm/plot_correlations-1.png" style="display: block; margin: auto;" />
@@ -254,13 +286,26 @@ dt_final[ ,delta_expr_tot:=mean(delta_expr,na.rm=T),by=c("target","position","mu
 dt_final[ ,n_bc_expr_tot:=sum(n_bc_expr,na.rm=T),by=c("target","position","mutant")]
 dt_final[ ,n_libs_expr_tot:=sum(!is.na(mean_expr)),by=c("target","position","mutant")]
 
+dt_final[ ,psr_tot:=mean(mean_psr,na.rm=T),by=c("target","position","mutant")]
+dt_final[ ,delta_psr_tot:=mean(delta_psr,na.rm=T),by=c("target","position","mutant")]
+dt_final[ ,n_bc_psr_tot:=sum(n_bc_psr,na.rm=T),by=c("target","position","mutant")]
+dt_final[ ,n_libs_psr_tot:=sum(!is.na(mean_psr)),by=c("target","position","mutant")]
+
 #switch to antibody indexing of postitions
-#dt_final$position <- dt_final$position + config$site_number_offset
+CGG_sites <- read.csv(file=config$CGGnaive_site_info, stringsAsFactors = F)
+for(i in 1:nrow(CGG_sites)){
+  dt_final[position==CGG_sites[i,"site_scFv"],position_IMTG:=CGG_sites[i,"site"]]
+  dt_final[position==CGG_sites[i,"site_scFv"],chain:=CGG_sites[i,"chain"]]
+  dt_final[position==CGG_sites[i,"site_scFv"],codon:=CGG_sites[i,"KI_codon"]]
+}
 
 #add single mutation string
-dt_final[,mutation:=paste(wildtype,position,mutant,sep=""),by=c("wildtype","position","mutant")]
+dt_final[,mutation:=paste(wildtype,position_IMTG,"(",chain,")",mutant,sep=""),by=c("wildtype","position","mutant")]
 
-dt_final <- unique(dt_final[,.(target,wildtype,position,mutant,mutation,bind_tot,delta_bind_tot,n_bc_bind_tot,n_libs_bind_tot,expr_tot,delta_expr_tot,n_bc_expr_tot,n_libs_expr_tot)])
+dt_final <- unique(dt_final[,.(target,wildtype,position,position_IMTG,chain,mutant,mutation,codon,
+                               bind_tot,delta_bind_tot,n_bc_bind_tot,n_libs_bind_tot,
+                               expr_tot,delta_expr_tot,n_bc_expr_tot,n_libs_expr_tot,
+                               psr_tot, delta_psr_tot, n_bc_psr_tot, n_libs_psr_tot)])
 
 #rename some of the columns
 setnames(dt_final,"bind_tot","bind")
@@ -271,15 +316,32 @@ setnames(dt_final,"expr_tot","expr")
 setnames(dt_final,"delta_expr_tot","delta_expr")
 setnames(dt_final,"n_bc_expr_tot","n_bc_expr")
 setnames(dt_final,"n_libs_expr_tot","n_libs_expr")
+setnames(dt_final,"psr_tot","psr")
+setnames(dt_final,"delta_psr_tot","delta_psr")
+setnames(dt_final,"n_bc_psr_tot","n_bc_psr")
+setnames(dt_final,"n_libs_psr_tot","n_libs_psr")
+```
+
+Censor any measurements that are from \<3 bc or only sampled in a single
+replicate
+
+``` r
+min_bc <- 3
+min_lib <- 2
+
+dt_final[n_bc_bind < min_bc & n_libs_bind < min_lib, c("bind","delta_bind","n_bc_bind","n_libs_bind") := list(NA,NA,NA,NA)]
+dt_final[n_bc_expr < min_bc & n_libs_expr < min_lib, c("expr","delta_expr","n_bc_expr","n_libs_expr") := list(NA,NA,NA,NA)]
+dt_final[n_bc_psr < min_bc & n_libs_psr < min_lib, c("psr","delta_psr","n_bc_psr","n_libs_psr") := list(NA,NA,NA,NA)]
 ```
 
 Coverage stats on n_barcodes for different measurements in the final
 pooled measurements.
 
 ``` r
-par(mfrow=c(1,2))
-hist(dt_final[wildtype!=mutant & !(position %in% 113:127), n_bc_bind],col="gray50",main=paste("mutant bind score,\nmedian ",median(dt_final[wildtype!=mutant & !(position %in% 113:127), n_bc_bind],na.rm=T),sep=""),right=F,breaks=max(dt_final[wildtype!=mutant & !(position %in% 113:127), n_bc_bind]),xlab="")
-hist(dt_final[wildtype!=mutant & !(position %in% 113:127), n_bc_expr],col="gray50",main=paste("mutant expr score,\nmedian ",median(dt_final[wildtype!=mutant & !(position %in% 113:127), n_bc_expr],na.rm=T),sep=""),right=F,breaks=max(dt_final[wildtype!=mutant & !(position %in% 113:127), n_bc_expr]),xlab="")
+par(mfrow=c(1,3))
+hist(dt_final[wildtype!=mutant & !(chain=="link"), n_bc_bind],col="gray50",main=paste("mutant bind score,\nmedian ",median(dt_final[wildtype!=mutant & !(chain=="link"), n_bc_bind],na.rm=T),sep=""),right=F,breaks=max(dt_final[wildtype!=mutant & !(chain=="link"), n_bc_bind],na.rm=T),xlab="")
+hist(dt_final[wildtype!=mutant & !(chain=="link"), n_bc_expr],col="gray50",main=paste("mutant expr score,\nmedian ",median(dt_final[wildtype!=mutant & !(chain=="link"), n_bc_expr],na.rm=T),sep=""),right=F,breaks=max(dt_final[wildtype!=mutant & !(chain=="link"), n_bc_expr],na.rm=T),xlab="")
+hist(dt_final[wildtype!=mutant & !(chain=="link"), n_bc_psr],col="gray50",main=paste("mutant psr score,\nmedian ",median(dt_final[wildtype!=mutant & !(chain=="link"), n_bc_psr],na.rm=T),sep=""),right=F,breaks=max(dt_final[wildtype!=mutant & !(chain=="link"), n_bc_psr],na.rm=T),xlab="")
 ```
 
 <img src="collapse_scores_files/figure-gfm/n_barcode_plots-1.png" style="display: block; margin: auto;" />
@@ -288,9 +350,46 @@ hist(dt_final[wildtype!=mutant & !(position %in% 113:127), n_bc_expr],col="gray5
 invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/histogram_n_bc_per_geno_pooled-libs.pdf",sep="")))
 ```
 
+Relationships in mutation effects between the three properties?
+
+``` r
+pairs(dt_final[wildtype!=mutant & !(chain=="link"), .(delta_bind,delta_expr,delta_psr)],main="",pch=19,col="#00000010")
+```
+
+<img src="collapse_scores_files/figure-gfm/scatters_mut_effects_on_phenos-1.png" style="display: block; margin: auto;" />
+
+``` r
+invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/scatterplots_mut_effects_on_3_phenos.pdf",sep="")))
+```
+
+Annotate with whether a mutation is single-nt-mut accessible from the
+CGG naive knockin allele.
+
+``` r
+#define a function that takes a character of three nucleotides (a codon), and outputs all amino acids that can be accessed via single-nt mutation of that codon
+get.codon.muts <- function(codon){
+  nt <- c("A","C","G","T")
+  codon_split <- strsplit(codon,split="")[[1]]
+  codon_muts <- seqinr::translate(codon_split)
+  for(i in nt[nt!=codon_split[1]]){
+    codon_muts <- c(codon_muts,seqinr::translate(c(i,codon_split[2:3])))
+  }
+  for(i in nt[nt!=codon_split[2]]){
+    codon_muts <- c(codon_muts,seqinr::translate(c(codon_split[1],i,codon_split[3])))
+  }
+  for(i in nt[nt!=codon_split[3]]){
+    codon_muts <- c(codon_muts,seqinr::translate(c(codon_split[1:2],i)))
+  }
+  return(codon_muts)
+}
+
+dt_final[!is.na(codon),single_nt := mutant %in% get.codon.muts(codon),by=mutation]
+```
+
 ## Heatmaps!
 
-Order factor variables for plotting
+Order factor variables for plotting, translate to heavy chain and light
+chain numbering, etc.
 
 ``` r
 #order mutant as a factor for grouping by rough biochemical grouping
@@ -299,8 +398,20 @@ dt_final$mutant <- factor(dt_final$mutant, levels=c("C","P","G","V","M","L","I",
 dt_final[,wildtype_indicator := ""]
 dt_final[as.character(mutant)==as.character(wildtype),wildtype_indicator := "x"]
 
+#add character vector indicating multi mut indicator to use as plotting symbol
+dt_final[,multimut_indicator := ""]
+dt_final[single_nt==FALSE, multimut_indicator := "/"]
+
 #make temp long-form data frame
-temp <- data.table::melt(dt_final[, .(target,position,mutant,bind,delta_bind,expr,delta_expr,wildtype_indicator)],id.vars=c("target","position","mutant","wildtype_indicator"),measure.vars=c("bind","delta_bind","expr","delta_expr"),variable.name="measurement",value.name="value")
+temp <- data.table::melt(dt_final[, .(target,position,position_IMTG,chain,mutant,
+                                      bind,delta_bind,expr,delta_expr,psr,delta_psr,wildtype_indicator,multimut_indicator)],
+                         id.vars=c("target","position","position_IMTG","chain","mutant","wildtype_indicator","multimut_indicator"),
+                         measure.vars=c("bind","delta_bind","expr","delta_expr","psr","delta_psr"),
+                         variable.name="measurement",
+                         value.name="value")
+temp[,position_IMTG:=paste(chain,position_IMTG,sep="")]
+
+temp$position_IMTG <- factor(temp$position_IMTG,levels=unique(temp$position_IMTG))
 
 #for method to duplicate aa labels on right side of plot https://github.com/tidyverse/ggplot2/issues/3171
 guide_axis_label_trans <- function(label_trans = identity, ...) {
@@ -321,10 +432,10 @@ Make heatmaps showing raw affinity and delta-affinity of muts relative
 to wildtype
 
 ``` r
-p1 <- ggplot(temp[measurement=="bind",],aes(position,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="bind" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#FFFFFF","#003366"),limits=c(5,13),na.value="yellow")+
   #scale_fill_gradientn(colours=c("#FFFFFF","#FFFFFF","#003366"),limits=c(5,12),values=c(0,1/7,7/7),na.value="yellow")+ #three notches in case I want to 'censor' closer to the 5 boundary condition
-  #scale_x_continuous(expand=c(0,0),breaks=c(331,seq(335,530,by=5)))+
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,120,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
   coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
   guides(y.sec=guide_axis_label_trans())+
@@ -342,9 +453,9 @@ invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_log
 Second, illustrating delta_log10Ka grouped by SSM position.
 
 ``` r
-p1 <- ggplot(temp[measurement=="delta_bind",],aes(position,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="delta_bind" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#A94E35","#A94E35","#F48365","#FFFFFF","#7378B9","#383C6C"),limits=c(-7,3),values=c(0/10,1/10,3.5/10,7/10,8.5/10,10/10),na.value="yellow")+
-  #scale_x_continuous(expand=c(0,0),breaks=c(331,seq(335,530,by=5)))+
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
   coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
   guides(y.sec=guide_axis_label_trans())+
@@ -359,17 +470,38 @@ p1
 invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_delta-log10Ka.pdf",sep="")))
 ```
 
+Same as above, but hatch out mutations that are not accessible via
+single nt mutation from the KI naive BCR
+
+``` r
+p1 <- ggplot(temp[measurement=="delta_bind" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+  scale_fill_gradientn(colours=c("#A94E35","#A94E35","#F48365","#FFFFFF","#7378B9","#383C6C"),limits=c(-7,3),values=c(0/10,1/10,3.5/10,7/10,8.5/10,10/10),na.value="yellow")+
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
+  labs(x="",y="")+theme_classic(base_size=9)+
+  coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
+  guides(y.sec=guide_axis_label_trans())+
+  geom_text(aes(label=wildtype_indicator),size=2,color="gray10")+
+  geom_text(aes(label=multimut_indicator),size=2.5,color="gray10")
+
+p1
+```
+
+<img src="collapse_scores_files/figure-gfm/heatmap_DMS_delta-log10Ka-by-target_singlent-1.png" style="display: block; margin: auto;" />
+
+``` r
+invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_delta-log10Ka_singlent.pdf",sep="")))
+```
+
 Make heatmaps faceted by target, showing raw expression and
 delta-expression of muts relative to respective wildtype
 
 ``` r
-p1 <- ggplot(temp[measurement=="expr",],aes(position,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="expr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#FFFFFF","#003366"),limits=c(5,11),na.value="yellow")+
   #scale_fill_gradientn(colours=c("#FFFFFF","#FFFFFF","#003366"),limits=c(5,11.2),values=c(0,1/7,7/7),na.value="yellow")+ #three notches in case I want to 'censor' closer to the 5 boundary condition
-  scale_x_continuous(expand=c(0,0),breaks=c(331,seq(335,530,by=5)))+
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
   coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
-  facet_wrap(~target,nrow=4)+
   guides(y.sec=guide_axis_label_trans())+
   geom_text(aes(label=wildtype_indicator),size=2,color="gray10")
 
@@ -385,12 +517,11 @@ invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_exp
 Second, illustrating delta_expression grouped by SSM position.
 
 ``` r
-p1 <- ggplot(temp[measurement=="delta_expr",],aes(position,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="delta_expr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#A94E35","#A94E35","#F48365","#FFFFFF","#7378B9","#383C6C"),limits=c(-5.5,1),values=c(0/6.5,1.5/6.5,3.5/6.5,5.5/6.5,6/6.5,6.5/6.5),na.value="yellow")+
-  scale_x_continuous(expand=c(0,0),breaks=c(331,seq(335,530,by=5)))+
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
   coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
-  facet_wrap(~target,nrow=4)+
   guides(y.sec=guide_axis_label_trans())+
   geom_text(aes(label=wildtype_indicator),size=2,color="gray10")
 
@@ -403,12 +534,100 @@ p1
 invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_delta-expression-by-target.pdf",sep="")))
 ```
 
+Same as above, but hatching out non-accessible single nt mut amino acids
+
+``` r
+p1 <- ggplot(temp[measurement=="delta_expr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+  scale_fill_gradientn(colours=c("#A94E35","#A94E35","#F48365","#FFFFFF","#7378B9","#383C6C"),limits=c(-5.5,1),values=c(0/6.5,1.5/6.5,3.5/6.5,5.5/6.5,6/6.5,6.5/6.5),na.value="yellow")+
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
+  labs(x="",y="")+theme_classic(base_size=9)+
+  coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
+  guides(y.sec=guide_axis_label_trans())+
+  geom_text(aes(label=wildtype_indicator),size=2,color="gray10")+
+  geom_text(aes(label=multimut_indicator),size=2.5,color="gray10")
+
+
+p1
+```
+
+<img src="collapse_scores_files/figure-gfm/heatmap_DMS_delta-expression-by-target_singlent-1.png" style="display: block; margin: auto;" />
+
+``` r
+invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_delta-expression-by-target_singlent.pdf",sep="")))
+```
+
+Make heatmaps faceted by target, showing raw polyspecificity and
+delta-polyspecificity of muts relative to respective wildtype
+
+``` r
+p1 <- ggplot(temp[measurement=="psr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+  scale_fill_gradientn(colours=c("#FFFFFF","#003366"),limits=c(5,9.5),na.value="yellow")+
+  #scale_fill_gradientn(colours=c("#FFFFFF","#FFFFFF","#003366"),limits=c(5,10),values=c(0,1/7.1,7.1/7.1),na.value="yellow")+ #three notches in case I want to 'censor' closer to the 5 boundary condition
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
+  labs(x="",y="")+theme_classic(base_size=9)+
+  coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
+  guides(y.sec=guide_axis_label_trans())+
+  geom_text(aes(label=wildtype_indicator),size=2,color="gray10")
+
+p1
+```
+
+<img src="collapse_scores_files/figure-gfm/heatmap_DMS_polyspecificity-by-target-1.png" style="display: block; margin: auto;" />
+
+``` r
+invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_polyspecificity-by-target.pdf",sep="")))
+```
+
+Second, illustrating delta_polyspecificity grouped by SSM position.
+
+``` r
+p1 <- ggplot(temp[measurement=="delta_psr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+  scale_fill_gradientn(colours=c("#383C6C","#7378B9","#FFFFFF","#F48365","#A94E35","#A94E35"),limits=c(-2,3),values=c(0/5,1/5,2/5,3/5,4/5,5/5),na.value="yellow")+
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
+  labs(x="",y="")+theme_classic(base_size=9)+
+  coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
+  guides(y.sec=guide_axis_label_trans())+
+  geom_text(aes(label=wildtype_indicator),size=2,color="gray10")
+
+p1
+```
+
+<img src="collapse_scores_files/figure-gfm/heatmap_DMS_delta-polyspecificity-by-target-1.png" style="display: block; margin: auto;" />
+
+``` r
+invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_delta-polyspecificity-by-target.pdf",sep="")))
+```
+
+Same as above, but hatching out non-single-nt-accessible amino acids
+
+``` r
+p1 <- ggplot(temp[measurement=="delta_psr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+  scale_fill_gradientn(colours=c("#383C6C","#7378B9","#FFFFFF","#F48365","#A94E35","#A94E35"),limits=c(-2,3),values=c(0/5,1/5,2/5,3/5,4/5,5/5),na.value="yellow")+
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
+  labs(x="",y="")+theme_classic(base_size=9)+
+  coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
+  guides(y.sec=guide_axis_label_trans())+
+  geom_text(aes(label=wildtype_indicator),size=2,color="gray10")+
+  geom_text(aes(label=multimut_indicator),size=2.5,color="gray10")
+
+p1
+```
+
+<img src="collapse_scores_files/figure-gfm/heatmap_DMS_delta-polyspecificity-by-target_singlent-1.png" style="display: block; margin: auto;" />
+
+``` r
+invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_delta-polyspecificity-by-target_singlent.pdf",sep="")))
+```
+
 That’s the data! Other analyses in additional notebooks
 
 Save output files.
 
 ``` r
-dt_final[,.(target,wildtype,position,mutant,mutation,bind,delta_bind,n_bc_bind,n_libs_bind,expr,delta_expr,n_bc_expr,n_libs_expr)] %>%
+dt_final[,.(target,wildtype,position,position_IMTG,chain,mutant,mutation,codon,single_nt,
+            bind,delta_bind,n_bc_bind,n_libs_bind,
+            expr,delta_expr,n_bc_expr,n_libs_expr,
+            psr, delta_psr, n_bc_psr, n_libs_psr)] %>%
   mutate_if(is.numeric, round, digits=5) %>%
   write.csv(file=config$final_variant_scores_mut_file, row.names=F,quote=F)
 ```

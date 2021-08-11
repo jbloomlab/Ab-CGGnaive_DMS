@@ -196,16 +196,16 @@ Why were estimates not returned for some barcodes? The histograms below show tha
 ```{r avgcount, fig.width=8, fig.height=8, fig.align="center",dpi=300,dev="png"}
 par(mfrow=c(2,2))
 hist(log10(dt[library=="lib1" & !is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=20,xlim=c(0,5),main="lib1",col="gray50",xlab="average cell count across concentration samples")
-hist(log10(dt[library=="lib1" & is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=20,add=T,col="red")
+hist(log10(dt[library=="lib1" & is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=30,add=T,col="red")
 
 hist(log10(dt[library=="lib2" & !is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=20,xlim=c(0,5),main="lib2",col="gray50",xlab="average cell count across concentration samples")
-hist(log10(dt[library=="lib2" & is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=20,add=T,col="red")
+hist(log10(dt[library=="lib2" & is.na(Kd_CGG),TiteSeq_avgcount]+0.5),breaks=30,add=T,col="red")
 
 hist(dt[library=="lib1" & !is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=5,main="lib1",col="gray50",xlab="number of sample concentrations below cutoff cell number",xlim=c(0,10))
-hist(dt[library=="lib1" & is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=16,add=T,col="red")
+hist(dt[library=="lib1" & is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=20,add=T,col="red")
 
 hist(dt[library=="lib2" & !is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=5,main="lib2",col="gray50",xlab="number of sample concentrations below cutoff cell number",xlim=c(0,10))
-hist(dt[library=="lib2" & is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=16,add=T,col="red")
+hist(dt[library=="lib2" & is.na(Kd_CGG),TiteSeq_min_cell_filtered],breaks=20,add=T,col="red")
 ```
 
 To allow manual checks of what the data looks like for different curve fits, I define functions that take a row from the dt table and the corresponding table of fits, and plots the meanbin estimates and the fit titration curve (if converged). This allows for quick and easy troubleshooting and spot-checking of curves.
@@ -253,9 +253,7 @@ hist(log10(dt[variant_class %in% (c("synonymous","wildtype")),Kd_CGG]),col="#922
 invisible(dev.print(pdf, paste(config$Titeseq_Kds_dir,"/hist_Kd-per-barcode.pdf",sep="")))
 ```
 
-Remove stops; make curve examples spanning the titraiton range; look at curves at different average count depths and # missing values. nMSRs. Then cutoff by nMSR, output final values
-
-Some stop variants eked through our RBD+ selection, either perhaps because of stop codon readthrough, improper PacBio sequence annotation, or other weirdness. Either way, the vast majority of nonsense mutants were purged before this step, and the remaining ones are biased toward unreliable and so we remove them.
+Some stop variants eked through our scFv+ gating, either perhaps because of stop codon readthrough, improper PacBio sequence annotation, or other weirdness. Either way, the vast majority of nonsense mutants were purged before this step, and the remaining ones are biased toward unreliable and so we remove them.
 ```{r remove_stops}
 #remove stop variants, which even if they eke through, either a) still have low counts and give poor fits as a result, or b) seem to be either dubious PacBio calls (lower variant_call_support) or have late stop codons which perhaps don't totally ablate funciton. Either way, the vast majority were purged before this step and we don't want to deal with the remaining ones!
 dt[variant_class == "stop",c("Kd_CGG","Kd_SE_CGG","response_CGG","baseline_CGG","nMSR_CGG") := list(as.numeric(NA),as.numeric(NA),as.numeric(NA),as.numeric(NA),as.numeric(NA))]
@@ -263,83 +261,93 @@ dt[variant_class == "stop",c("Kd_CGG","Kd_SE_CGG","response_CGG","baseline_CGG",
 
 Let's take a look at some of the curves with *K*<sub>D,app</sub> values across this distribution to get a broad sense of how things look.
 
-First, curves with *K*<sub>D,app</sub> fixed at the 10<sup>-5</sup> maximum. We can see these are all flat-lined curves with no response.
 
-```{r 1e-5_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 9e-6)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 9e-6)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 9e-6)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 9e-6)[2])
-```
 
-Next, with *K*<sub>D,app</sub> around 10<sup>-6</sup>
+First, curves with *K*<sub>D,app</sub> around 10<sup>-6</sup> (because of nonspecific background signal, which we partially deplete, all curves rise at the higher titration concentrations so nothign gets fit to the imposed fit maximum 10^-5). These curves are noisy background and are truly expected to be non-binders.
 
 ```{r 1e-6_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-6 & dt$Kd_CGG < 1.2e-6)[2])
 ```
 
-With *K*<sub>D,app</sub> around 10<sup>-7</sup>, we seem to be picking up more consistent binding signals, though there are some noisy curves.
+With *K*<sub>D,app</sub> around 10<sup>-7</sup>, still substantial noise in the curves, would not reliably call any of these binders compared to those above at 10^-6.
 
 ```{r 1e-7_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-7 & dt$Kd_CGG < 1.2e-7)[2])
 ```
 
-At *K*<sub>D,app</sub> of 10<sup>-8</sup>, we are likewise picking up some signal, perhaps a bit less noise than the -8 curves
+At *K*<sub>D,app</sub> of 10<sup>-8</sup>, it seems we're beginning to pick up genuine curves with weaker binding
 
 ```{r 1e-8_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-8 & dt$Kd_CGG < 1.2e-8)[2])
 ```
 
-Same at *K*<sub>D,app</sub> of 10<sup>-9</sup>.
+Same at *K*<sub>D,app</sub> of 10<sup>-9</sup>, looking pretty good.
 
 ```{r 1e-9_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-9 & dt$Kd_CGG < 1.2e-9)[2])
 ```
 
-*K*<sub>D,app</sub> of 10<sup>-10</sup>
+*K*<sub>D,app</sub> of 10<sup>-10</sup>, is beginning to move into the 'mode' of most mutant binding
 
 ```{r 1e-10_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-10 & dt$Kd_CGG < 1.2e-10)[2])
 ```
+*K*<sub>D,app</sub> of 10<sup>-10.5</sup>, is toward the mode including of WT binders. Curves look quite nice.
 
+```{r 1e-10.5_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 3.1e-11 & dt$Kd_CGG < 3.2e-11)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 3.1e-11 & dt$Kd_CGG < 3.2e-11)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 3.1e-11 & dt$Kd_CGG < 3.2e-11)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 3.1e-11 & dt$Kd_CGG < 3.2e-11)[2])
+```
 *K*<sub>D,app</sub> ~ 10<sup>-11</sup>. This is just past the wt-like 'mode' of binding affinity
 
 ```{r 1e-11_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-11 & dt$Kd_CGG < 2e-11)[2])
+```
+
+*K*<sub>D,app</sub> ~ 10<sup>-11.5</sup>. 
+
+```{r 1e-11.5_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 3.1e-12 & dt$Kd_CGG < 3.2e-12)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 3.1e-12 & dt$Kd_CGG < 3.2e-12)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 3.1e-12 & dt$Kd_CGG < 3.2e-12)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 3.1e-12 & dt$Kd_CGG < 3.2e-12)[2])
 ```
 
 *K*<sub>D,app</sub> ~ 10<sup>-12</sup>.
 ```{r 1e-12_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-# par(mfrow=c(2,2))
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[1])
-# plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[2])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[1])
-# plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[2])
+par(mfrow=c(2,2))
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_CGG > 1e-12 & dt$Kd_CGG < 4e-12)[2])
 ```
 
 ## Data filtering by fit quality
@@ -347,7 +355,6 @@ Same at *K*<sub>D,app</sub> of 10<sup>-9</sup>.
 Next, let's filter out poor fits using the value we previously computed, the *normalized* mean square residual (nMSR). This metric computes the residual between the observed response variable and that predicted from the titration fit, normalizes this residual by the response range of the titration fit (which is allowed to vary between 1.5 and 3 per the titration fits above), and computes the mean-square of these normalized residuals.
 
 Look at nMSR metric versus avgcoutn value, and layer on value of nMSR filtering based on 20x the global median (and percentage filtered from each background). Filter to NA fits with nMSR above this cutoff
-
 
 ```{r nMSR_v_cell_count, fig.width=4, fig.height=4, fig.align="center",dpi=300,dev="png"}
 median.nMSR <- median(dt$nMSR_CGG,na.rm=T)
@@ -369,7 +376,7 @@ dt[,log10Ka := -log10(Kd_CGG),by=c("barcode","library")]
 
 Let's visualize the final binding measurements as violin plots for the different wildtype targets. In next notebook, we'll evaluate count depth and possibly apply further filtering to remove low-count expression estimates
 
-```{r binding_distribution_vioplot, echo=T, fig.width=6, fig.height=18, fig.align="center", dpi=300,dev="png"}
+```{r binding_distribution_vioplot, echo=T, fig.width=6, fig.height=4.5, fig.align="center", dpi=300,dev="png"}
 p1 <- ggplot(dt[!is.na(log10Ka),],aes(x=variant_class,y=log10Ka))+
   geom_violin(scale="width")+stat_summary(fun=median,geom="point",size=1)+
   ggtitle("huCGG, log10(Ka)")+xlab("variant class")+theme(axis.text.x=element_text(angle=-90,hjust=0))+
