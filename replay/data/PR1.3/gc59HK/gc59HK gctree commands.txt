@@ -1,0 +1,83 @@
+211028 new gctree commands
+
+Analyze: PR1.3 gc59HK, min5
+
+*** correct frame should be 1 for all by definition  ***
+	# frame set to 1 on inference
+
+# gctree environment
+conda activate gctree
+
+# move to gctree folder
+cd /Users/Tatsuya7091/gctree
+
+# move to relevant project folder
+cd (sth), to the PR1.3/gc## folder
+
+
+
+# deduplication -> phylip format, and seq abundance files --> csv
+
+deduplicate ./input/gc59HK.fa --root naive --idmapfile idmap-gc59HK.txt --abundance_file abundances.csv > deduplicated.phylip
+
+
+
+
+
+# make config file for phylip's dnapars (parsimony tree generation)
+mkconfig deduplicated.phylip dnapars > dnapars.cfg
+
+
+
+
+
+# run dnapars --> makes the outfile and outtree of the alignment (need to move the file)
+dnapars < dnapars.cfg > dnapars.log
+
+
+
+
+
+
+
+########################## run the actual gctree inference
+gctree infer [-h] [--root ROOT] [--bootstrap_phylipfile BOOTSTRAP_PHYLIPFILE] [--colormapfile COLORMAPFILE] [--chain_split CHAIN_SPLIT] [--frame2 {1,2,3}]
+             [--positionmapfile POSITIONMAPFILE] [--positionmapfile2 POSITIONMAPFILE2] [--outbase OUTBASE] [--img_type IMG_TYPE] [--verbose]
+             [--frame {1,2,3}] [--idlabel]
+             phylipfile abundance_file
+##########################
+
+#### Color ####
+isotype:
+	IgM = Salmon
+	IgG1 = LightGreen
+	IgG2 = PaleTurquoise
+	error (IgG1 in this case)
+
+#### Inference #### (chain_split should be 336 after YH)
+
+# for HK
+gctree infer outfile abundances.csv --root naive --frame 1 --frame2 1 --positionmapfile /Users/Tatsuya7091/gctree/PR1.1/metadata/210929PR_H_index-imgtTs.txt --positionmapfile2 /Users/Tatsuya7091/gctree/PR1.1/metadata/210930PR_K_index-imgtTs.txt --chain_split 336 --idlabel --verbose
+
+
+	210928PR_VH3-8_index-imgtTs and colormapfile should be tab delimited?
+
+
+
+
+# HK without splitting things (do that during rendering)
+gctree infer outfile abundances.csv --root naive --colormapfile ./input/gc74HK-isotype.txt --idlabel --verbose
+
+
+
+
+
+
+
+
+
+
+In chain_split:
+	red = first chain (left)
+	blue = second chain (right)
+	purple = both
