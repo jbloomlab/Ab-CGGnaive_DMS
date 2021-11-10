@@ -13,3 +13,4 @@ results/binding_Kd/bc_binding.csv filter=lfs diff=lfs merge=lfs -text
 results/expression_meanF/bc_expression.csv filter=lfs diff=lfs merge=lfs -text
 results/final_variant_scores/final_variant_scores.csv filter=lfs diff=lfs merge=lfs -text
 results/PSR_EC50/bc_polyspecificity.csv filter=lfs diff=lfs merge=lfs -text
+results/PSR_bind/bc_polyspecificity.csv filter=lfs diff=lfs merge=lfs -text

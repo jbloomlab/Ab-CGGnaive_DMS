@@ -30,9 +30,9 @@ results/expression_meanF/*
 results/binding_Kd/*
 !results/binding_Kd/bc_binding.csv
 
-!results/PSR_EC50
-results/PSR_EC50/*
-!results/PSR_EC50/bc_polyspecificity.csv
+!results/PSR_bind
+results/PSR_bind/*
+!results/PSR_bind/bc_polyspecificity.csv
 
 !results/final_variant_scores
 results/final_variant_scores/*
