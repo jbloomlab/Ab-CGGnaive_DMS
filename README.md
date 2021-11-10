@@ -96,7 +96,7 @@ Then the large results files were added for tracking with:
 git lfs track results/variants/codon_variant_table.csv
 git lfs track results/counts/variant_counts.csv
 git lfs track results/binding_Kd/bc_binding.csv
-git lfs track results/PSR_EC50/bc_polyspecificity.csv
+git lfs track results/PSR_bind/bc_polyspecificity.csv
 git lfs track results/expression_meanF/bc_expression.csv
 git lfs track results/final_variant_scores/final_variant_scores.csv
 ```
