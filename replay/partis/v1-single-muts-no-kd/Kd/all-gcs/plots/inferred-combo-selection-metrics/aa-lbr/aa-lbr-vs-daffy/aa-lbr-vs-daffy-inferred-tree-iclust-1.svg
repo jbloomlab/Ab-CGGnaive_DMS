@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with matplotlib (http://matplotlib.org/) -->
+<svg height="345.6pt" version="1.1" viewBox="0 0 460.8 345.6" width="460.8pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+*{stroke-linecap:butt;stroke-linejoin:round;}
+  </style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 345.6 
+L 460.8 345.6 
+L 460.8 0 
+L 0 0 
+z
+" style="fill:#ffffff;"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 95.709375 280.874219 
+L 435.7 280.874219 
+L 435.7 39.232031 
+L 95.709375 39.232031 
+z
+" style="fill:#ffffff;"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <defs>
+       <path d="M 0 0 
+L 0 3.5 
+" id="mc6f71b6c9c" style="stroke:#262626;stroke-width:0.8;"/>
+      </defs>
+      <g>
+       <use style="fill:#262626;stroke:#262626;stroke-width:0.8;" x="150.973306" xlink:href="#mc6f71b6c9c" y="280.874219"/>
+      </g>
+     </g>
+     <g id="text_1">
+      <text style="fill:#262626;font-family:Lato;font-size:15px;font-style:normal;font-weight:600;text-anchor:middle;" transform="rotate(-0, 150.973306, 299.01875)" x="150.973306" y="299.01875">0.325</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2">
+      <g>
+       <use style="fill:#262626;stroke:#262626;stroke-width:0.8;" x="246.582791" xlink:href="#mc6f71b6c9c" y="280.874219"/>
+      </g>
+     </g>
+     <g id="text_2">
+      <text style="fill:#262626;font-family:Lato;font-size:15px;font-style:normal;font-weight:600;text-anchor:middle;" transform="rotate(-0, 246.582791, 299.01875)" x="246.582791" y="299.01875">0.330</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3">
+      <g>
+       <use style="fill:#262626;stroke:#262626;stroke-width:0.8;" x="342.192275" xlink:href="#mc6f71b6c9c" y="280.874219"/>
+      </g>
+     </g>
+     <g id="text_3">
+      <text style="fill:#262626;font-family:Lato;font-size:15px;font-style:normal;font-weight:600;text-anchor:middle;" transform="rotate(-0, 342.192275, 299.01875)" x="342.192275" y="299.01875">0.335</text>
+     </g>
+    </g>
+    <g id="text_4">
+     <text style="fill:#262626;font-family:Lato;font-size:20px;font-style:normal;font-weight:600;text-anchor:middle;" transform="rotate(-0, 265.704687, 320.390625)" x="265.704687" y="320.390625">affinity change</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_4">
+      <defs>
+       <path d="M 0 0 
+L -3.5 0 
+" id="m347777b311" style="stroke:#262626;stroke-width:0.8;"/>
+      </defs>
+      <g>
+       <use style="fill:#262626;stroke:#262626;stroke-width:0.8;" x="95.709375" xlink:href="#m347777b311" y="256.024458"/>
+      </g>
+     </g>
+     <g id="text_5">
+      <text style="fill:#262626;font-family:Lato;font-size:20px;font-style:normal;font-weight:600;text-anchor:end;" transform="rotate(-0, 88.709375, 263.454146)" x="88.709375" y="263.454146">3</text>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_5">
+      <defs>
+       <path d="M 0 0 
+L -2 0 
+" id="m4ee79c7e85" style="stroke:#262626;stroke-width:0.6;"/>
+      </defs>
+      <g>
+       <use style="fill:#262626;stroke:#262626;stroke-width:0.6;" x="95.709375" xlink:href="#m4ee79c7e85" y="279.16755"/>
+      </g>
+     </g>
+     <g id="text_6">
+      <!-- $\mathdefault{3\times10^{0}}$ -->
+      <g style="fill:#262626;" transform="translate(43.809375 284.739815)">
+       <text>
+        <tspan style="font-family:Lato;font-size:15px;font-style:bold;font-weight:bold;" x="0 11.212479 22.424957 31.124939" y="-0.940625">3×10</tspan>
+        <tspan style="font-family:Lato;font-size:10.5px;font-style:bold;font-weight:bold;" x="39.959452" y="-6.321875">0</tspan>
+       </text>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_6">
+      <g>
+       <use style="fill:#262626;stroke:#262626;stroke-width:0.6;" x="95.709375" xlink:href="#m4ee79c7e85" y="152.785242"/>
+      </g>
+     </g>
+     <g id="text_7">
+      <!-- $\mathdefault{4\times10^{0}}$ -->
+      <g style="fill:#262626;" transform="translate(43.809375 158.357508)">
+       <text>
+        <tspan style="font-family:Lato;font-size:15px;font-style:bold;font-weight:bold;" x="0 11.212479 22.424957 31.124939" y="-0.940625">4×10</tspan>
+        <tspan style="font-family:Lato;font-size:10.5px;font-style:bold;font-weight:bold;" x="39.959452" y="-6.321875">0</tspan>
+       </text>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_7">
+      <g>
+       <use style="fill:#262626;stroke:#262626;stroke-width:0.6;" x="95.709375" xlink:href="#m4ee79c7e85" y="54.755509"/>
+      </g>
+     </g>
+     <g id="text_8">
+      <!-- $\mathdefault{5\times10^{0}}$ -->
+      <g style="fill:#262626;" transform="translate(43.809375 60.327774)">
+       <text>
+        <tspan style="font-family:Lato;font-size:15px;font-style:bold;font-weight:bold;" x="0 11.212479 22.424957 31.124939" y="-0.940625">5×10</tspan>
+        <tspan style="font-family:Lato;font-size:10.5px;font-style:bold;font-weight:bold;" x="39.959452" y="-6.321875">0</tspan>
+       </text>
+      </g>
+     </g>
+    </g>
+    <g id="text_9">
+     <text style="fill:#262626;font-family:Lato;font-size:20px;font-style:normal;font-weight:600;text-anchor:middle;" transform="rotate(-90, 36.459375, 160.053125)" x="36.459375" y="160.053125">AA lb ratio</text>
+    </g>
+   </g>
+   <g id="PathCollection_1">
+    <defs>
+     <path d="M 0 3 
+C 0.795609 3 1.55874 2.683901 2.12132 2.12132 
+C 2.683901 1.55874 3 0.795609 3 0 
+C 3 -0.795609 2.683901 -1.55874 2.12132 -2.12132 
+C 1.55874 -2.683901 0.795609 -3 0 -3 
+C -0.795609 -3 -1.55874 -2.683901 -2.12132 -2.12132 
+C -2.683901 -1.55874 -3 -0.795609 -3 0 
+C -3 0.795609 -2.683901 1.55874 -2.12132 2.12132 
+C -1.55874 2.683901 -0.795609 3 0 3 
+z
+" id="m9ecfbf5a68" style="stroke:#1f77b4;stroke-opacity:0.4;"/>
+    </defs>
+    <g clip-path="url(#p6e4fc3720e)">
+     <use style="fill:#1f77b4;fill-opacity:0.4;stroke:#1f77b4;stroke-opacity:0.4;" x="265.704687" xlink:href="#m9ecfbf5a68" y="154.491911"/>
+    </g>
+   </g>
+   <g id="patch_3">
+    <path d="M 95.709375 280.874219 
+L 95.709375 39.232031 
+" style="fill:none;stroke:#262626;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 95.709375 280.874219 
+L 435.7 280.874219 
+" style="fill:none;stroke:#262626;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="text_10">
+    <text style="fill:#262626;font-family:Lato;font-size:15px;font-style:normal;font-weight:bold;text-anchor:middle;" transform="rotate(-0, 265.704687, 33.232031)" x="265.704687" y="33.232031">AA lb ratio on inferred tree (cluster 1)</text>
+   </g>
+  </g>
+  <g id="text_11">
+   <text style="fill:#262626;font-family:Lato;font-size:20px;font-style:normal;font-weight:bold;text-anchor:start;" transform="rotate(-0, 115.2, 69.12)" x="115.2" y="69.12">r = nan</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p6e4fc3720e">
+   <rect height="241.642187" width="339.990625" x="95.709375" y="39.232031"/>
+  </clipPath>
+ </defs>
+</svg>
