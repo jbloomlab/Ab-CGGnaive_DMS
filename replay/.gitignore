@@ -1,5 +1,7 @@
 data*/*/*/gctree.out.inference.[2-9].*
 data*/*/*/gctree.out.inference.[0-9][0-9]*.*
+data*/*/*/gctree.out.inference.[0-9][0-9][0-9]*.*
+data*/*/*/gctree.out.inference.[0-9][0-9][0-9][0-9]*.*
 data*/*/*/outfile
 data*/*/*/outtree
 data*/*/*/gctree.out.inference.parsimony_forest.p
