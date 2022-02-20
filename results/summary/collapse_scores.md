@@ -294,15 +294,15 @@ dt_final[ ,n_libs_psr_tot:=sum(!is.na(mean_psr)),by=c("target","position","mutan
 #switch to antibody indexing of postitions
 CGG_sites <- read.csv(file=config$CGGnaive_site_info, stringsAsFactors = F)
 for(i in 1:nrow(CGG_sites)){
-  dt_final[position==CGG_sites[i,"site_scFv"],position_IMTG:=CGG_sites[i,"site"]]
+  dt_final[position==CGG_sites[i,"site_scFv"],position_IMGT:=CGG_sites[i,"site"]]
   dt_final[position==CGG_sites[i,"site_scFv"],chain:=CGG_sites[i,"chain"]]
   dt_final[position==CGG_sites[i,"site_scFv"],codon:=CGG_sites[i,"KI_codon"]]
 }
 
 #add single mutation string
-dt_final[,mutation:=paste(wildtype,position_IMTG,"(",chain,")",mutant,sep=""),by=c("wildtype","position","mutant")]
+dt_final[,mutation:=paste(wildtype,position_IMGT,"(",chain,")",mutant,sep=""),by=c("wildtype","position","mutant")]
 
-dt_final <- unique(dt_final[,.(target,wildtype,position,position_IMTG,chain,mutant,mutation,codon,
+dt_final <- unique(dt_final[,.(target,wildtype,position,position_IMGT,chain,mutant,mutation,codon,
                                bind_tot,delta_bind_tot,n_bc_bind_tot,n_libs_bind_tot,
                                expr_tot,delta_expr_tot,n_bc_expr_tot,n_libs_expr_tot,
                                psr_tot, delta_psr_tot, n_bc_psr_tot, n_libs_psr_tot)])
@@ -403,15 +403,15 @@ dt_final[,multimut_indicator := ""]
 dt_final[single_nt==FALSE, multimut_indicator := "/"]
 
 #make temp long-form data frame
-temp <- data.table::melt(dt_final[, .(target,position,position_IMTG,chain,mutant,
+temp <- data.table::melt(dt_final[, .(target,position,position_IMGT,chain,mutant,
                                       bind,delta_bind,expr,delta_expr,psr,delta_psr,wildtype_indicator,multimut_indicator)],
-                         id.vars=c("target","position","position_IMTG","chain","mutant","wildtype_indicator","multimut_indicator"),
+                         id.vars=c("target","position","position_IMGT","chain","mutant","wildtype_indicator","multimut_indicator"),
                          measure.vars=c("bind","delta_bind","expr","delta_expr","psr","delta_psr"),
                          variable.name="measurement",
                          value.name="value")
-temp[,position_IMTG:=paste(chain,position_IMTG,sep="")]
+temp[,position_IMGT:=paste(chain,position_IMGT,sep="")]
 
-temp$position_IMTG <- factor(temp$position_IMTG,levels=unique(temp$position_IMTG))
+temp$position_IMGT <- factor(temp$position_IMGT,levels=unique(temp$position_IMGT))
 
 #for method to duplicate aa labels on right side of plot https://github.com/tidyverse/ggplot2/issues/3171
 guide_axis_label_trans <- function(label_trans = identity, ...) {
@@ -432,7 +432,7 @@ Make heatmaps showing raw affinity and delta-affinity of muts relative
 to wildtype
 
 ``` r
-p1 <- ggplot(temp[measurement=="bind" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="bind" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#FFFFFF","#003366"),limits=c(5,13),na.value="yellow")+
   #scale_fill_gradientn(colours=c("#FFFFFF","#FFFFFF","#003366"),limits=c(5,12),values=c(0,1/7,7/7),na.value="yellow")+ #three notches in case I want to 'censor' closer to the 5 boundary condition
   #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,120,by=5)))+
@@ -453,7 +453,7 @@ invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_log
 Second, illustrating delta_log10Ka grouped by SSM position.
 
 ``` r
-p1 <- ggplot(temp[measurement=="delta_bind" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="delta_bind" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#A94E35","#A94E35","#F48365","#FFFFFF","#7378B9","#383C6C"),limits=c(-7,3),values=c(0/10,1/10,3.5/10,7/10,8.5/10,10/10),na.value="yellow")+
   #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
@@ -474,7 +474,7 @@ Same as above, but hatch out mutations that are not accessible via
 single nt mutation from the KI naive BCR
 
 ``` r
-p1 <- ggplot(temp[measurement=="delta_bind" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="delta_bind" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#A94E35","#A94E35","#F48365","#FFFFFF","#7378B9","#383C6C"),limits=c(-7,3),values=c(0/10,1/10,3.5/10,7/10,8.5/10,10/10),na.value="yellow")+
   #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
@@ -496,7 +496,7 @@ Make heatmaps faceted by target, showing raw expression and
 delta-expression of muts relative to respective wildtype
 
 ``` r
-p1 <- ggplot(temp[measurement=="expr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="expr" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#FFFFFF","#003366"),limits=c(5,11),na.value="yellow")+
   #scale_fill_gradientn(colours=c("#FFFFFF","#FFFFFF","#003366"),limits=c(5,11.2),values=c(0,1/7,7/7),na.value="yellow")+ #three notches in case I want to 'censor' closer to the 5 boundary condition
   #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
@@ -517,7 +517,7 @@ invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_exp
 Second, illustrating delta_expression grouped by SSM position.
 
 ``` r
-p1 <- ggplot(temp[measurement=="delta_expr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="delta_expr" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#A94E35","#A94E35","#F48365","#FFFFFF","#7378B9","#383C6C"),limits=c(-5.5,1),values=c(0/6.5,1.5/6.5,3.5/6.5,5.5/6.5,6/6.5,6.5/6.5),na.value="yellow")+
   #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
@@ -537,7 +537,7 @@ invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_del
 Same as above, but hatching out non-accessible single nt mut amino acids
 
 ``` r
-p1 <- ggplot(temp[measurement=="delta_expr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="delta_expr" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#A94E35","#A94E35","#F48365","#FFFFFF","#7378B9","#383C6C"),limits=c(-5.5,1),values=c(0/6.5,1.5/6.5,3.5/6.5,5.5/6.5,6/6.5,6.5/6.5),na.value="yellow")+
   #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
@@ -560,7 +560,7 @@ Make heatmaps faceted by target, showing raw polyspecificity and
 delta-polyspecificity of muts relative to respective wildtype
 
 ``` r
-p1 <- ggplot(temp[measurement=="psr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="psr" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#FFFFFF","#003366"),limits=c(5,9.5),na.value="yellow")+
   #scale_fill_gradientn(colours=c("#FFFFFF","#FFFFFF","#003366"),limits=c(5,10),values=c(0,1/7.1,7.1/7.1),na.value="yellow")+ #three notches in case I want to 'censor' closer to the 5 boundary condition
   #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
@@ -581,7 +581,7 @@ invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_pol
 Second, illustrating delta_polyspecificity grouped by SSM position.
 
 ``` r
-p1 <- ggplot(temp[measurement=="delta_psr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="delta_psr" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#383C6C","#7378B9","#FFFFFF","#F48365","#A94E35","#A94E35"),limits=c(-2,3),values=c(0/5,1/5,2/5,3/5,4/5,5/5),na.value="yellow")+
   #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
@@ -601,7 +601,7 @@ invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_del
 Same as above, but hatching out non-single-nt-accessible amino acids
 
 ``` r
-p1 <- ggplot(temp[measurement=="delta_psr" & chain != "link",],aes(position_IMTG,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+p1 <- ggplot(temp[measurement=="delta_psr" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
   scale_fill_gradientn(colours=c("#383C6C","#7378B9","#FFFFFF","#F48365","#A94E35","#A94E35"),limits=c(-2,3),values=c(0/5,1/5,2/5,3/5,4/5,5/5),na.value="yellow")+
   #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
   labs(x="",y="")+theme_classic(base_size=9)+
@@ -624,7 +624,7 @@ That’s the data! Other analyses in additional notebooks
 Save output files.
 
 ``` r
-dt_final[,.(target,wildtype,position,position_IMTG,chain,mutant,mutation,codon,single_nt,
+dt_final[,.(target,wildtype,position,position_IMGT,chain,mutant,mutation,codon,single_nt,
             bind,delta_bind,n_bc_bind,n_libs_bind,
             expr,delta_expr,n_bc_expr,n_libs_expr,
             psr, delta_psr, n_bc_psr, n_libs_psr)] %>%
