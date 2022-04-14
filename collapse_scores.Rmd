@@ -214,18 +214,19 @@ dt_final[ ,delta_psr_tot:=mean(delta_psr,na.rm=T),by=c("target","position","muta
 dt_final[ ,n_bc_psr_tot:=sum(n_bc_psr,na.rm=T),by=c("target","position","mutant")]
 dt_final[ ,n_libs_psr_tot:=sum(!is.na(mean_psr)),by=c("target","position","mutant")]
 
-#switch to antibody indexing of postitions
+#switch to antibody indexing of postitions, also add annotation column for CDR/FWR annotations
 CGG_sites <- read.csv(file=config$CGGnaive_site_info, stringsAsFactors = F)
 for(i in 1:nrow(CGG_sites)){
   dt_final[position==CGG_sites[i,"site_scFv"],position_IMGT:=CGG_sites[i,"site"]]
   dt_final[position==CGG_sites[i,"site_scFv"],chain:=CGG_sites[i,"chain"]]
   dt_final[position==CGG_sites[i,"site_scFv"],codon:=CGG_sites[i,"KI_codon"]]
+  dt_final[position==CGG_sites[i,"site_scFv"],annotation:=CGG_sites[i,"annotation"]]
 }
 
 #add single mutation string
 dt_final[,mutation:=paste(wildtype,position_IMGT,"(",chain,")",mutant,sep=""),by=c("wildtype","position","mutant")]
 
-dt_final <- unique(dt_final[,.(target,wildtype,position,position_IMGT,chain,mutant,mutation,codon,
+dt_final <- unique(dt_final[,.(target,wildtype,position,position_IMGT,chain,annotation,mutant,mutation,codon,
                                bind_tot,delta_bind_tot,n_bc_bind_tot,n_libs_bind_tot,
                                expr_tot,delta_expr_tot,n_bc_expr_tot,n_libs_expr_tot,
                                psr_tot, delta_psr_tot, n_bc_psr_tot, n_libs_psr_tot)])
@@ -489,7 +490,7 @@ That's the data! Other analyses in additional notebooks
 Save output files.
 
 ```{r outputs}
-dt_final[,.(target,wildtype,position,position_IMGT,chain,mutant,mutation,codon,single_nt,
+dt_final[,.(target,wildtype,position,position_IMGT,chain,annotation,mutant,mutation,codon,single_nt,
             bind,delta_bind,n_bc_bind,n_libs_bind,
             expr,delta_expr,n_bc_expr,n_libs_expr,
             psr, delta_psr, n_bc_psr, n_libs_psr)] %>%
