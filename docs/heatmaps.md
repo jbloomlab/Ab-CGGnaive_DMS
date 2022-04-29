@@ -11,7 +11,7 @@ You can use this tool to explore the experimentally determined impacts of amino 
 
 #### Instruction
 
-To use this tool, you can select a region of interest using a zoom bar. Hover over individual mutations to see exact numerical details.
+To use this tool, you can select a region of interest using a zoom bar. Hover over individual mutations to see exact numerical details. You can select the annotation of the x axis (the value in parentheses) using a dropdown menu.
 
 #### Technical Details
 
