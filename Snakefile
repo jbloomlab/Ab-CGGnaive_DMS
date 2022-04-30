@@ -119,19 +119,16 @@ rule structural_mapping:
         config['CGGnaive_site_info'],
         config['pdb']
     output:
-        md='results/summary/structural_mapping.md',
-        md_files=directory('results/summary/structural_mapping_files')
+        md='results/summary/structural_mapping.md'
     envmodules:
         'R/3.6.2-foss-2019b'
     params:
         nb='structural_mapping.Rmd',
-        md='structural_mapping.md',
-        md_files='structural_mapping_files'
+        md='structural_mapping.md'
     shell:
         """
         R -e \"rmarkdown::render(input=\'{params.nb}\')\";
-        mv {params.md} {output.md};
-        mv {params.md_files} {output.md_files}
+        mv {params.md} {output.md}
         """
 
 

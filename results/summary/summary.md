@@ -27,3 +27,5 @@ workflow:
 
 7. [Derive final genotype-level phenotypes from replicate barcoded sequences](collapse_scores.md).
    Generates final phenotypes, recorded in [this file](../final_variant_scores/final_variant_scores.csv).
+
+   8. [Map DMS phenotypes to the CGG-bound antibody structure](structural_mapping.md).
