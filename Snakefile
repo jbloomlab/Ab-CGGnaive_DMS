@@ -59,6 +59,8 @@ rule make_summary:
         variant_expression_file=config['expression_sortseq_file'],
         collapse_scores='results/summary/collapse_scores.md',
         mut_phenos_file=config['final_variant_scores_mut_file'],
+        structural_mapping='results/summary/structural_mapping.md',
+        
     output:
         summary = os.path.join(config['summary_dir'], 'summary.md')
     run:
@@ -96,7 +98,8 @@ rule make_summary:
             
             7. [Derive final genotype-level phenotypes from replicate barcoded sequences]({path(input.collapse_scores)}).
                Generates final phenotypes, recorded in [this file]({path(input.mut_phenos_file)}).
-
+               
+               8. [Map DMS phenotypes to the CGG-bound antibody structure]({path(input.structural_mapping)}).
 
             """
             ).strip())
@@ -109,6 +112,28 @@ rule make_dag:
         os.path.join(config['summary_dir'], 'dag.svg')
     shell:
         "snakemake --forceall --dag | dot -Tsvg > {output}"
+
+rule structural_mapping:
+    input:
+        config['final_variant_scores_mut_file'],
+        config['CGGnaive_site_info'],
+        config['pdb']
+    output:
+        md='results/summary/structural_mapping.md',
+        md_files=directory('results/summary/structural_mapping_files')
+    envmodules:
+        'R/3.6.2-foss-2019b'
+    params:
+        nb='structural_mapping.Rmd',
+        md='structural_mapping.md',
+        md_files='structural_mapping_files'
+    shell:
+        """
+        R -e \"rmarkdown::render(input=\'{params.nb}\')\";
+        mv {params.md} {output.md};
+        mv {params.md_files} {output.md_files}
+        """
+
 
 rule collapse_scores:
     input:

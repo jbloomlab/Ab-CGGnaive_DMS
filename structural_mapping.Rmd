@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
 
 #list of packages to install/load
-packages = c("yaml","data.table","tidyverse","gridExtra","egg","bio3d","ggrepel")
+packages = c("yaml","data.table","tidyverse","gridExtra","bio3d","ggrepel")
 #install any packages not already installed
 installed_packages <- packages %in% rownames(installed.packages())
 if(any(installed_packages == F)){
@@ -72,11 +72,11 @@ sites$mean_polyspecificity <- NA
   
 for(i in 1:nrow(sites)){
   if(sites[i,"chain"] != "link"){
-    sites$mean_CGG_bind[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind>3,delta_bind],na.rm=T)
-  sites$max_CGG_bind[i] <- max(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind>3,delta_bind],na.rm=T)
-  sites$quartile75_CGG_bind[i] <- quantile(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind>3,delta_bind],0.75,na.rm=T)
-  sites$mean_expression[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_expr>3,delta_expr],na.rm=T)
-  sites$mean_polyspecificity[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_psr>3,delta_psr],na.rm=T)
+    sites$mean_CGG_bind[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],na.rm=T)
+    sites$max_CGG_bind[i] <- max(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],na.rm=T)
+    sites$quartile75_CGG_bind[i] <- quantile(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],0.75,na.rm=T)
+    sites$mean_expression[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_expr>3,delta_expr],na.rm=T)
+    sites$mean_polyspecificity[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_psr>3,delta_psr],na.rm=T)
   }
 }
 
