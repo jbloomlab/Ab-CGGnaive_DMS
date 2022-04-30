@@ -115,7 +115,8 @@ rule collapse_scores:
         config['Titeseq_Kds_file'],
         config['Titeseq_TuGG_Kds_file'],
         config['expression_sortseq_file'],
-        config['PSR_bind_file']
+        config['PSR_bind_file'],
+        config['CGGnaive_site_info']
     output:
         config['final_variant_scores_mut_file'],
         md='results/summary/collapse_scores.md',

@@ -1,7 +1,7 @@
 ---
 title: "Compute per-barcode TuGG binding affinity"
 author: "Tyler Starr"
-date: "8/6/2021"
+date: "4/29/2022"
 output:
   github_document:
     html_preview: false
@@ -102,7 +102,7 @@ Next, for each barcode at each of the TuGG concentrations, calculate the "mean b
 We do not use the fluorescence boundaries of the FACS bins in our calculations here, but we provide them for posterity's sake below. The fluorescence boundaries for bins 1-4 are as follows:
 
 ```
-(-288, 136), (137, 2000), (2001, 29421), (29422, 262143)
+(xx,xx)
 ```
 
 ```{r calculate_mean_bin}
@@ -133,22 +133,22 @@ for(i in 1:nrow(samples_TiteSeq)){ #iterate through titeseq sample (concentratio
 We will use nonlinear least squares regression to fit curves to each barcode's titration series. We will also include a minimum cell count that is required for a meanbin estimate to be used in the titration fit, and a minimum number of concentrations with determined meanbin that is required for a titration to be reported. 
 
 ```{r fit_titrations}
-#For QC and filtering, output columns giving the average number of cells that were sampled for a barcode across the 9 sample concentrations, and a value for the number of meanbin estimates that were removed for being below the # of cells cutoff
+#For QC and filtering, output columns giving the average number of cells that were sampled for a barcode across the 8 sample concentrations, and a value for the number of meanbin estimates that were removed for being below the # of cells cutoff
 cutoff <- 5
-dt[,TiteSeq_avgcount := mean(c(TiteSeq_01_totalcount,TiteSeq_02_totalcount,TiteSeq_03_totalcount,TiteSeq_04_totalcount,
-                                TiteSeq_05_totalcount,TiteSeq_06_totalcount,TiteSeq_07_totalcount,TiteSeq_08_totalcount,
-                                TiteSeq_09_totalcount),na.rm=T),by=c("library","barcode")]
+dt[,TuGG_TiteSeq_avgcount := mean(c(TuGG_TiteSeq_01_totalcount,TuGG_TiteSeq_02_totalcount,TuGG_TiteSeq_03_totalcount,TuGG_TiteSeq_04_totalcount,
+                                TuGG_TiteSeq_05_totalcount,TuGG_TiteSeq_06_totalcount,TuGG_TiteSeq_07_totalcount,
+                                TuGG_TiteSeq_09_totalcount),na.rm=T),by=c("library","barcode")]
 
 #number of concentrations at which meanbin is calculated from < cutoff cells or is missing b/c filtered for bimodality
-dt[,TiteSeq_min_cell_filtered := sum(c(c(TiteSeq_01_totalcount,TiteSeq_02_totalcount,TiteSeq_03_totalcount,TiteSeq_04_totalcount,
-                                        TiteSeq_05_totalcount,TiteSeq_06_totalcount,TiteSeq_07_totalcount,TiteSeq_08_totalcount,
-                                        TiteSeq_09_totalcount)<cutoff,is.na(c(TiteSeq_01_totalcount,TiteSeq_02_totalcount,TiteSeq_03_totalcount,TiteSeq_04_totalcount,
-                                                                             TiteSeq_05_totalcount,TiteSeq_06_totalcount,TiteSeq_07_totalcount,TiteSeq_08_totalcount,
-                                                                             TiteSeq_09_totalcount))),na.rm=T),by=c("library","barcode")]
+dt[,TuGG_TiteSeq_min_cell_filtered := sum(c(c(TuGG_TiteSeq_01_totalcount,TuGG_TiteSeq_02_totalcount,TuGG_TiteSeq_03_totalcount,TuGG_TiteSeq_04_totalcount,
+                                        TuGG_TiteSeq_05_totalcount,TuGG_TiteSeq_06_totalcount,TuGG_TiteSeq_07_totalcount,
+                                        TuGG_TiteSeq_09_totalcount)<cutoff,is.na(c(TuGG_TiteSeq_01_totalcount,TuGG_TiteSeq_02_totalcount,TuGG_TiteSeq_03_totalcount,TuGG_TiteSeq_04_totalcount,
+                                                                             TuGG_TiteSeq_05_totalcount,TuGG_TiteSeq_06_totalcount,TuGG_TiteSeq_07_totalcount,
+                                                                             TuGG_TiteSeq_09_totalcount))),na.rm=T),by=c("library","barcode")]
 
 #function that fits a nls regression to the titration series, including an option to filter below certain thresholds for average cells across all samples, and number of samples below a cutoff of cells
 fit.titration <- function(y.vals,x.vals,count.vals,min.cfu=cutoff,
-                          min.means=0.8,min.average=cutoff,Kd.start=1e-11,
+                          min.means=0.8,min.average=cutoff,Kd.start=1e-8,
                           a.start=3,a.lower=2,a.upper=3,
                           b.start=1,b.lower=1,b.upper=1.5){
   indices <- count.vals>min.cfu & !is.na(y.vals)
@@ -174,14 +174,14 @@ fit.titration <- function(y.vals,x.vals,count.vals,min.cfu=cutoff,
   }
 }
 
-#fit titration to TuGG Titeseq data for each barcode
+#fit titration to TuGG_TiteSeq data for each barcode
 dt[,c("Kd_TuGG","Kd_SE_TuGG","response_TuGG","baseline_TuGG","nMSR_TuGG") :=
-     tryCatch(fit.titration(y.vals=c(TiteSeq_01_meanbin,TiteSeq_02_meanbin,TiteSeq_03_meanbin,TiteSeq_04_meanbin,
-                                     TiteSeq_05_meanbin,TiteSeq_06_meanbin,TiteSeq_07_meanbin,TiteSeq_08_meanbin,
-                                     TiteSeq_09_meanbin),
+     tryCatch(fit.titration(y.vals=c(TuGG_TiteSeq_01_meanbin,TuGG_TiteSeq_02_meanbin,TuGG_TiteSeq_03_meanbin,TuGG_TiteSeq_04_meanbin,
+                                     TuGG_TiteSeq_05_meanbin,TuGG_TiteSeq_06_meanbin,TuGG_TiteSeq_07_meanbin,
+                                     TuGG_TiteSeq_09_meanbin),
                             x.vals=samples_TiteSeq$conc,
-                            count.vals=c(TiteSeq_01_totalcount,TiteSeq_02_totalcount,TiteSeq_03_totalcount,TiteSeq_04_totalcount,
-                                         TiteSeq_05_totalcount,TiteSeq_06_totalcount,TiteSeq_07_totalcount,TiteSeq_08_totalcount,TiteSeq_09_totalcount)),
+                            count.vals=c(TuGG_TiteSeq_01_totalcount,TuGG_TiteSeq_02_totalcount,TuGG_TiteSeq_03_totalcount,TuGG_TiteSeq_04_totalcount,
+                                         TuGG_TiteSeq_05_totalcount,TuGG_TiteSeq_06_totalcount,TuGG_TiteSeq_07_totalcount,TuGG_TiteSeq_09_totalcount)),
               error=function(e){list(as.numeric(NA),as.numeric(NA),as.numeric(NA),as.numeric(NA),as.numeric(NA))}),by=c("library","barcode")]
 
 ```
@@ -195,17 +195,17 @@ Why were estimates not returned for some barcodes? The histograms below show tha
 
 ```{r avgcount, fig.width=8, fig.height=8, fig.align="center",dpi=300,dev="png"}
 par(mfrow=c(2,2))
-hist(log10(dt[library=="lib1" & !is.na(Kd_TuGG),TiteSeq_avgcount]+0.5),breaks=20,xlim=c(0,5),main="lib1",col="gray50",xlab="average cell count across concentration samples")
-hist(log10(dt[library=="lib1" & is.na(Kd_TuGG),TiteSeq_avgcount]+0.5),breaks=30,add=T,col="red")
+hist(log10(dt[library=="lib1" & !is.na(Kd_TuGG),TuGG_TiteSeq_avgcount]+0.5),breaks=20,xlim=c(0,5),main="lib1",col="gray50",xlab="average cell count across concentration samples")
+hist(log10(dt[library=="lib1" & is.na(Kd_TuGG),TuGG_TiteSeq_avgcount]+0.5),breaks=30,add=T,col="red")
 
-hist(log10(dt[library=="lib2" & !is.na(Kd_TuGG),TiteSeq_avgcount]+0.5),breaks=20,xlim=c(0,5),main="lib2",col="gray50",xlab="average cell count across concentration samples")
-hist(log10(dt[library=="lib2" & is.na(Kd_TuGG),TiteSeq_avgcount]+0.5),breaks=30,add=T,col="red")
+hist(log10(dt[library=="lib2" & !is.na(Kd_TuGG),TuGG_TiteSeq_avgcount]+0.5),breaks=20,xlim=c(0,5),main="lib2",col="gray50",xlab="average cell count across concentration samples")
+hist(log10(dt[library=="lib2" & is.na(Kd_TuGG),TuGG_TiteSeq_avgcount]+0.5),breaks=30,add=T,col="red")
 
-hist(dt[library=="lib1" & !is.na(Kd_TuGG),TiteSeq_min_cell_filtered],breaks=5,main="lib1",col="gray50",xlab="number of sample concentrations below cutoff cell number",xlim=c(0,10))
-hist(dt[library=="lib1" & is.na(Kd_TuGG),TiteSeq_min_cell_filtered],breaks=20,add=T,col="red")
+hist(dt[library=="lib1" & !is.na(Kd_TuGG),TuGG_TiteSeq_min_cell_filtered],breaks=5,main="lib1",col="gray50",xlab="number of sample concentrations below cutoff cell number",xlim=c(0,10))
+hist(dt[library=="lib1" & is.na(Kd_TuGG),TuGG_TiteSeq_min_cell_filtered],breaks=20,add=T,col="red")
 
-hist(dt[library=="lib2" & !is.na(Kd_TuGG),TiteSeq_min_cell_filtered],breaks=5,main="lib2",col="gray50",xlab="number of sample concentrations below cutoff cell number",xlim=c(0,10))
-hist(dt[library=="lib2" & is.na(Kd_TuGG),TiteSeq_min_cell_filtered],breaks=20,add=T,col="red")
+hist(dt[library=="lib2" & !is.na(Kd_TuGG),TuGG_TiteSeq_min_cell_filtered],breaks=5,main="lib2",col="gray50",xlab="number of sample concentrations below cutoff cell number",xlim=c(0,10))
+hist(dt[library=="lib2" & is.na(Kd_TuGG),TuGG_TiteSeq_min_cell_filtered],breaks=20,add=T,col="red")
 ```
 
 To allow manual checks of what the data looks like for different curve fits, I define functions that take a row from the dt table and the corresponding table of fits, and plots the meanbin estimates and the fit titration curve (if converged). This allows for quick and easy troubleshooting and spot-checking of curves.
@@ -263,7 +263,7 @@ Let's take a look at some of the curves with *K*<sub>D,app</sub> values across t
 
 
 
-First, curves with *K*<sub>D,app</sub> around 10<sup>-6</sup> (because of nonspecific background signal, which we partially deplete, all curves rise at the higher titration concentrations so nothign gets fit to the imposed fit maximum 10^-5). These curves are noisy background and are truly expected to be non-binders.
+First, curves with *K*<sub>D,app</sub> around 10<sup>-6</sup> (because of nonspecific background signal, which we partially deplete, all curves rise at the higher titration concentrations so nothign gets fit to the imposed fit maximum 10^-5). These curves are fit with basically the last sample point being at 10^-6.
 
 ```{r 1e-6_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
 par(mfrow=c(2,2))
@@ -273,7 +273,7 @@ plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-6 & dt$Kd_TuGG < 1.2e-
 plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-6 & dt$Kd_TuGG < 1.2e-6)[2])
 ```
 
-With *K*<sub>D,app</sub> around 10<sup>-7</sup>, still substantial noise in the curves, would not reliably call any of these binders compared to those above at 10^-6.
+With *K*<sub>D,app</sub> around 10<sup>-7</sup>, we do seem to be catching the tails of the curves. Most of our library is in this low-affinity range
 
 ```{r 1e-7_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
 par(mfrow=c(2,2))
@@ -293,7 +293,7 @@ plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-8 & dt$Kd_TuGG < 1.2e-
 plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-8 & dt$Kd_TuGG < 1.2e-8)[2])
 ```
 
-Same at *K*<sub>D,app</sub> of 10<sup>-9</sup>, looking pretty good.
+Same at *K*<sub>D,app</sub> of 10<sup>-9</sup>, looking pretty good. Not many curves left in this area of affinity
 
 ```{r 1e-9_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
 par(mfrow=c(2,2))
@@ -303,64 +303,27 @@ plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-9 & dt$Kd_TuGG < 1.2e-
 plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-9 & dt$Kd_TuGG < 1.2e-9)[2])
 ```
 
-*K*<sub>D,app</sub> of 10<sup>-10</sup>, is beginning to move into the 'mode' of most mutant binding
+*K*<sub>D,app</sub> of 10<sup>-10</sup> or tighter -- there aren't that many curves in this regime, but they look pretty good.
 
 ```{r 1e-10_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
 par(mfrow=c(2,2))
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 1e-10 & dt$Kd_TuGG < 1.2e-10)[1])
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 1e-10 & dt$Kd_TuGG < 1.2e-10)[2])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-10 & dt$Kd_TuGG < 1.2e-10)[1])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-10 & dt$Kd_TuGG < 1.2e-10)[2])
-```
-*K*<sub>D,app</sub> of 10<sup>-10.5</sup>, is toward the mode including of WT binders. Curves look quite nice.
-
-```{r 1e-10.5_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-par(mfrow=c(2,2))
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 3.1e-11 & dt$Kd_TuGG < 3.2e-11)[1])
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 3.1e-11 & dt$Kd_TuGG < 3.2e-11)[2])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 3.1e-11 & dt$Kd_TuGG < 3.2e-11)[1])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 3.1e-11 & dt$Kd_TuGG < 3.2e-11)[2])
-```
-*K*<sub>D,app</sub> ~ 10<sup>-11</sup>. This is just past the wt-like 'mode' of binding affinity
-
-```{r 1e-11_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-par(mfrow=c(2,2))
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 1e-11 & dt$Kd_TuGG < 2e-11)[1])
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 1e-11 & dt$Kd_TuGG < 2e-11)[2])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-11 & dt$Kd_TuGG < 2e-11)[1])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-11 & dt$Kd_TuGG < 2e-11)[2])
-```
-
-*K*<sub>D,app</sub> ~ 10<sup>-11.5</sup>. 
-
-```{r 1e-11.5_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-par(mfrow=c(2,2))
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 3.1e-12 & dt$Kd_TuGG < 3.2e-12)[1])
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 3.1e-12 & dt$Kd_TuGG < 3.2e-12)[2])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 3.1e-12 & dt$Kd_TuGG < 3.2e-12)[1])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 3.1e-12 & dt$Kd_TuGG < 3.2e-12)[2])
-```
-
-*K*<sub>D,app</sub> ~ 10<sup>-12</sup>.
-```{r 1e-12_Kd, fig.width=8, fig.height=8, fig.align="center",dpi=300, warning=FALSE, results=FALSE,dev="png"}
-par(mfrow=c(2,2))
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 1e-12 & dt$Kd_TuGG < 4e-12)[1])
-plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG > 1e-12 & dt$Kd_TuGG < 4e-12)[2])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-12 & dt$Kd_TuGG < 4e-12)[1])
-plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG > 1e-12 & dt$Kd_TuGG < 4e-12)[2])
+plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG < 1.0e-10)[1])
+plot.titration(which(dt$library=="lib1" & dt$Kd_TuGG < 1.0e-10)[2])
+plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG < 1.0e-10)[1])
+plot.titration(which(dt$library=="lib2" & dt$Kd_TuGG < 1.0e-10)[2])
 ```
 
 ## Data filtering by fit quality
 
 Next, let's filter out poor fits using the value we previously computed, the *normalized* mean square residual (nMSR). This metric computes the residual between the observed response variable and that predicted from the titration fit, normalizes this residual by the response range of the titration fit (which is allowed to vary between 1.5 and 3 per the titration fits above), and computes the mean-square of these normalized residuals.
 
-Look at nMSR metric versus avgcoutn value, and layer on value of nMSR filtering based on 20x the global median (and percentage filtered from each background). Filter to NA fits with nMSR above this cutoff
+Look at nMSR metric versus avgcoutn value, and layer on value of nMSR filtering based on 10x the global median (and percentage filtered from each background). Filter to NA fits with nMSR above this cutoff
 
 ```{r nMSR_v_cell_count, fig.width=4, fig.height=4, fig.align="center",dpi=300,dev="png"}
 median.nMSR <- median(dt$nMSR_TuGG,na.rm=T)
-threshold <- 20
+threshold <- 10
 par(mfrow=c(1,1))
-plot(log10(dt[,TiteSeq_avgcount]),dt[,nMSR_TuGG],main="",pch=19,col="#00000010",xlab="average cell count (log10)",ylab="nMSR",xlim=c(0,3.5),ylim=c(0,0.5))
+plot(log10(dt[,TuGG_TiteSeq_avgcount]),dt[,nMSR_TuGG],main="",pch=19,col="#00000010",xlab="average cell count (log10)",ylab="nMSR",xlim=c(0,3.5),ylim=c(0,0.5))
 abline(h=threshold*median.nMSR,col="red",lty=2)
 legend("topleft",bty="n",cex=1,legend=paste(format(100*nrow(dt[nMSR_TuGG > threshold*median.nMSR & !is.na(nMSR_TuGG),])/nrow(dt[!is.na(nMSR_TuGG),]),digits=3),"%"))
 
@@ -371,15 +334,15 @@ dt[nMSR_TuGG > threshold*median.nMSR,c("Kd_TuGG","Kd_SE_TuGG","response_TuGG","b
 Last, convert our *K*<sub>D,app</sub> to 1) a log<sub>10</sub>-scale, and 2) *K*<sub>A,app</sub>, the inverse of *K*<sub>D,app</sub>, such that higher values are associated with tighter binding, as is more intuitive. (If we want to continue to discuss in terms of *K*<sub>D,app</sub>, since people are often more familiar with *K*<sub>D</sub>, we can refer to the log<sub>10</sub>(*K*<sub>A,app</sub>) as -log<sub>10</sub>(*K*<sub>D,app</sub>), which are identical.
 
 ```{r convert_log10Ka}
-dt[,log10Ka := -log10(Kd_TuGG),by=c("barcode","library")]
+dt[,log10Ka_TuGG := -log10(Kd_TuGG),by=c("barcode","library")]
 ```
 
 Let's visualize the final binding measurements as violin plots for the different wildtype targets. In next notebook, we'll evaluate count depth and possibly apply further filtering to remove low-count expression estimates
 
 ```{r binding_distribution_vioplot, echo=T, fig.width=6, fig.height=4.5, fig.align="center", dpi=300,dev="png"}
-p1 <- ggplot(dt[!is.na(log10Ka),],aes(x=variant_class,y=log10Ka))+
+p1 <- ggplot(dt[!is.na(log10Ka_TuGG),],aes(x=variant_class,y=log10Ka_TuGG))+
   geom_violin(scale="width")+stat_summary(fun=median,geom="point",size=1)+
-  ggtitle("huTuGG, log10(Ka)")+xlab("variant class")+theme(axis.text.x=element_text(angle=-90,hjust=0))+
+  ggtitle("TuGG, log10(Ka)")+xlab("variant class")+theme(axis.text.x=element_text(angle=-90,hjust=0))+
   facet_wrap(~target,nrow=4)
 
 grid.arrange(p1,ncol=1)
@@ -388,7 +351,7 @@ grid.arrange(p1,ncol=1)
 invisible(dev.print(pdf, paste(config$Titeseq_Kds_dir,"/violin-plot_log10Ka-by-target_TuGG.pdf",sep="")))
 ```
 
-We have generated binding measurements for `r round(nrow(dt[!is.na(log10Ka)])/nrow(dt)*100,digits=2)`% of the barcodes in our libraries.
+We have generated binding measurements for `r round(nrow(dt[!is.na(log10Ka_TuGG)])/nrow(dt)*100,digits=2)`% of the barcodes in our libraries.
 
 ## Data Output
 
@@ -396,7 +359,7 @@ Finally, let's output our measurements for downstream analyses.
 
 ```{r output_data}
 dt[,.(library,barcode,target,variant_class,aa_substitutions,n_aa_substitutions,
-     TiteSeq_avgcount,log10Ka)] %>%
+     TuGG_TiteSeq_avgcount,log10Ka_TuGG)] %>%
   mutate_if(is.numeric, round, digits=6) %>%
   write.csv(file=config$Titeseq_TuGG_Kds_file, row.names=F)
 

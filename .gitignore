@@ -28,6 +28,7 @@ results/expression_meanF/*
 !results/binding_Kd
 results/binding_Kd/*
 !results/binding_Kd/bc_binding.csv
+!results/binding_Kd/bc_binding_TuGG.csv
 
 !results/PSR_bind
 results/PSR_bind/*

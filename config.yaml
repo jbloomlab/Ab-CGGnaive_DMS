@@ -53,6 +53,7 @@ PSR_bind_dir: results/PSR_bind
 PSR_bind_file: results/PSR_bind/bc_polyspecificity.csv
 final_variant_scores_dir: results/final_variant_scores
 final_variant_scores_mut_file: results/final_variant_scores/final_variant_scores.csv
+structural_mapping_dir: results/structural_mapping
 
 # parameters for running PacBio `ccs` program
 min_ccs_accuracy: 0.999
