@@ -19,9 +19,13 @@ workflow:
 
 3. [Fit CGG-binding titration curves](compute_binding_Kd.md) to calculate per-barcode K<sub>D</sub>, recorded in [this file](../binding_Kd/bc_binding.csv).
 
-4. [Fit polyspecificity reagent binding Sort-seq](compute_binding_PSR.md) to calculate per-barcode polyspecificity score, recorded in [this file](../PSR_bind/bc_polyspecificity.csv).
+4. [Fit TuGG-binding titration curves](compute_binding_Kd_TuGG.md) to calculate per-barcode K<sub>D</sub>, recorded in [this file](../binding_Kd/bc_binding_TuGG.csv).
 
-5. [Analyze Sort-seq](compute_expression_meanF.md) to calculate per-barcode RBD expression, recorded in [this file](../expression_meanF/bc_expression.csv).
+5. [Fit polyspecificity reagent binding Sort-seq](compute_binding_PSR.md) to calculate per-barcode polyspecificity score, recorded in [this file](../PSR_bind/bc_polyspecificity.csv).
 
-6. [Derive final genotype-level phenotypes from replicate barcoded sequences](collapse_scores.md).
+6. [Analyze Sort-seq](compute_expression_meanF.md) to calculate per-barcode RBD expression, recorded in [this file](../expression_meanF/bc_expression.csv).
+
+7. [Derive final genotype-level phenotypes from replicate barcoded sequences](collapse_scores.md).
    Generates final phenotypes, recorded in [this file](../final_variant_scores/final_variant_scores.csv).
+
+   8. [Map DMS phenotypes to the CGG-bound antibody structure](structural_mapping.md).

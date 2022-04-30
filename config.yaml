@@ -30,6 +30,9 @@ CGGnaive_site_info: data/CGGnaive_sites.csv
 #target for mapping codon variant table (sort of redundant, but in code for when we have other unmutated targets spiked in lib)
 primary_target: CGG_naive
 
+#cryo-EM refined structure of CGGnaive bound to CGG (two complexes)
+pdb: data/IgY-CH2_EH2_final_real_space_refined_021.pdb
+
 # output directories / files
 summary_dir: results/summary
 figs_dir: results/figures
@@ -45,10 +48,12 @@ expression_sortseq_dir: results/expression_meanF
 expression_sortseq_file: results/expression_meanF/bc_expression.csv
 Titeseq_Kds_dir: results/binding_Kd
 Titeseq_Kds_file: results/binding_Kd/bc_binding.csv
+Titeseq_TuGG_Kds_file: results/binding_Kd/bc_binding_TuGG.csv
 PSR_bind_dir: results/PSR_bind
 PSR_bind_file: results/PSR_bind/bc_polyspecificity.csv
 final_variant_scores_dir: results/final_variant_scores
 final_variant_scores_mut_file: results/final_variant_scores/final_variant_scores.csv
+structural_mapping_dir: results/structural_mapping
 
 # parameters for running PacBio `ccs` program
 min_ccs_accuracy: 0.999

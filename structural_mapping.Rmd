@@ -1,0 +1,137 @@
+---
+title: "Map DMS to the chIgY-Fab sturcture"
+author: "Tyler Starr"
+date: "4/29/2022"
+output:
+  github_document:
+    toc: true
+    html_preview: false
+editor_options: 
+  chunk_output_type: inline
+---
+This notebook analyzes the structure of the CGGnaive Fab bound to the chicken IgY dimer. It generates a list of inter-residue distances and maps sitewise DMS properties to the B-factor column for visualization in PyMol.
+
+```{r setup, message=FALSE, warning=FALSE, error=FALSE}
+require("knitr")
+knitr::opts_chunk$set(echo = T)
+knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
+
+#list of packages to install/load
+packages = c("yaml","data.table","tidyverse","gridExtra","bio3d","ggrepel")
+#install any packages not already installed
+installed_packages <- packages %in% rownames(installed.packages())
+if(any(installed_packages == F)){
+  install.packages(packages[!installed_packages])
+}
+#load packages
+invisible(lapply(packages, library, character.only=T))
+
+#read in config file
+config <- read_yaml("config.yaml")
+
+#make output directory
+if(!file.exists(config$structural_mapping_dir)){
+  dir.create(file.path(config$structural_mapping_dir))
+}
+
+```
+Session info for reproducing environment:
+```{r print_sessionInfo}
+sessionInfo()
+```
+
+## Data input
+
+Read in tables of mutant measurements.
+
+```{r input_data}
+dt <- data.table(read.csv(file=config$final_variant_scores_mut_file,stringsAsFactors=F))
+```
+
+Read in the structure pdb
+
+```{r input_pdb}
+sites <- read.csv(file=config$CGGnaive_site_info,stringsAsFactors=F)
+```
+
+Read in the table giving annotations and information on CGGnaive sites
+```{r input_sites}
+pdb <- read.pdb(file=config$pdb)
+```
+
+
+## Compute site-wise metrics from DMS data for mapping to structure
+
+Want to map the mean effect of mutations on each of the three properties to structure. Also plot the *max* effect of any mutation at a site on binding as a metric of evolvability. Only include mutations with n_bc > 3 for these properties.
+```{r compute_site_properties}
+sites$mean_CGG_bind <- NA
+sites$max_CGG_bind <- NA
+sites$quartile75_CGG_bind <- NA
+sites$mean_expression <- NA
+sites$mean_polyspecificity <- NA
+  
+for(i in 1:nrow(sites)){
+  if(sites[i,"chain"] != "link"){
+    sites$mean_CGG_bind[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],na.rm=T)
+    sites$max_CGG_bind[i] <- max(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],na.rm=T)
+    sites$quartile75_CGG_bind[i] <- quantile(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],0.75,na.rm=T)
+    sites$mean_expression[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_expr>3,delta_expr],na.rm=T)
+    sites$mean_polyspecificity[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_psr>3,delta_psr],na.rm=T)
+  }
+}
+
+```
+
+
+## Map metrics to the structure
+```{r map_properties_to_pdb}
+b_mean_CGG <- rep(0, length(pdb$atom$b))
+b_max_CGG <- rep(0, length(pdb$atom$b))
+b_75th_CGG <- rep(0, length(pdb$atom$b))
+b_mean_expr <- rep(0, length(pdb$atom$b))
+b_mean_psr <- rep(0, length(pdb$atom$b))
+for(i in 1:nrow(pdb$atom)){
+  res <- pdb$atom$resno[i]
+  if(pdb$atom$chain[i] %in% c("B","H") & res %in% sites[sites$chain=="H","site"]){
+    b_mean_CGG[i] <- sites[sites$site==res & sites$chain=="H","mean_CGG_bind"]
+    b_max_CGG[i] <- sites[sites$site==res & sites$chain=="H","max_CGG_bind"]
+    b_75th_CGG[i] <- sites[sites$site==res & sites$chain=="H","quartile75_CGG_bind"]
+    b_mean_expr[i] <- sites[sites$site==res & sites$chain=="H","mean_expression"]
+    b_mean_psr[i] <- sites[sites$site==res & sites$chain=="H","mean_polyspecificity"]
+  }else if(pdb$atom$chain[i] %in% c("C","L") & res %in% sites[sites$chain=="L","site"]){
+    b_mean_CGG[i] <- sites[sites$site==res & sites$chain=="L","mean_CGG_bind"]
+    b_max_CGG[i] <- sites[sites$site==res & sites$chain=="L","max_CGG_bind"]
+    b_75th_CGG[i] <- sites[sites$site==res & sites$chain=="L","quartile75_CGG_bind"]
+    b_mean_expr[i] <- sites[sites$site==res & sites$chain=="L","mean_expression"]
+    b_mean_psr[i] <- sites[sites$site==res & sites$chain=="L","mean_polyspecificity"]
+  }
+}
+write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/CGG_mean.pdb",sep=""), b=b_mean_CGG)
+write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/CGG_max.pdb",sep=""), b=b_max_CGG)
+write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/CGG_75th.pdb",sep=""), b=b_75th_CGG)
+write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/expression_mean.pdb",sep=""), b=b_mean_expr)
+write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/psr_mean.pdb",sep=""), b=b_mean_psr)
+
+```
+
+Generate a list of contact residues (5A or closer contacts)
+
+Below are heavy chain residues that are 5A or closer to CGG ligand in each of the two protomers:
+
+```{r heavy_contacts}
+binding.site(pdb,
+             a.inds=atom.select(pdb,chain=c("H","B")),
+             b.inds=atom.select(pdb,chain=c("A","D")),
+             cutoff=5,hydrogens=F)$resnames
+
+```
+
+Below are light chain residues that are 5A or closer to CGG ligand in each of the two protomers:
+
+```{r light_contacts}
+binding.site(pdb,
+             a.inds=atom.select(pdb,chain=c("L","C")),
+             b.inds=atom.select(pdb,chain=c("A","D")),
+             cutoff=5,hydrogens=F)$resnames
+
+```

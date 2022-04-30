@@ -51,12 +51,16 @@ rule make_summary:
         count_variants=nb_markdown('count_variants.ipynb'),
         fit_titrations='results/summary/compute_binding_Kd.md',
         variant_Kds_file=config['Titeseq_Kds_file'],
+        fit_titrations_TuGG='results/summary/compute_binding_Kd_TuGG.md',
+        variant_TuGG_Kds_file=config['Titeseq_TuGG_Kds_file'],
         fit_PSR_curves='results/summary/compute_binding_PSR.md',
         variant_PSR_file=config['PSR_bind_file'],
         calculate_expression='results/summary/compute_expression_meanF.md',
         variant_expression_file=config['expression_sortseq_file'],
         collapse_scores='results/summary/collapse_scores.md',
         mut_phenos_file=config['final_variant_scores_mut_file'],
+        structural_mapping='results/summary/structural_mapping.md',
+        
     output:
         summary = os.path.join(config['summary_dir'], 'summary.md')
     run:
@@ -85,14 +89,17 @@ rule make_summary:
                giving counts of each barcoded variant in each condition.
 
             3. [Fit CGG-binding titration curves]({path(input.fit_titrations)}) to calculate per-barcode K<sub>D</sub>, recorded in [this file]({path(input.variant_Kds_file)}).
+            
+            4. [Fit TuGG-binding titration curves]({path(input.fit_titrations_TuGG)}) to calculate per-barcode K<sub>D</sub>, recorded in [this file]({path(input.variant_TuGG_Kds_file)}).
 
-            4. [Fit polyspecificity reagent binding Sort-seq]({path(input.fit_PSR_curves)}) to calculate per-barcode polyspecificity score, recorded in [this file]({path(input.variant_PSR_file)}).
+            5. [Fit polyspecificity reagent binding Sort-seq]({path(input.fit_PSR_curves)}) to calculate per-barcode polyspecificity score, recorded in [this file]({path(input.variant_PSR_file)}).
             
-            5. [Analyze Sort-seq]({path(input.calculate_expression)}) to calculate per-barcode RBD expression, recorded in [this file]({path(input.variant_expression_file)}).
+            6. [Analyze Sort-seq]({path(input.calculate_expression)}) to calculate per-barcode RBD expression, recorded in [this file]({path(input.variant_expression_file)}).
             
-            6. [Derive final genotype-level phenotypes from replicate barcoded sequences]({path(input.collapse_scores)}).
+            7. [Derive final genotype-level phenotypes from replicate barcoded sequences]({path(input.collapse_scores)}).
                Generates final phenotypes, recorded in [this file]({path(input.mut_phenos_file)}).
-
+               
+               8. [Map DMS phenotypes to the CGG-bound antibody structure]({path(input.structural_mapping)}).
 
             """
             ).strip())
@@ -106,11 +113,32 @@ rule make_dag:
     shell:
         "snakemake --forceall --dag | dot -Tsvg > {output}"
 
+rule structural_mapping:
+    input:
+        config['final_variant_scores_mut_file'],
+        config['CGGnaive_site_info'],
+        config['pdb']
+    output:
+        md='results/summary/structural_mapping.md'
+    envmodules:
+        'R/3.6.2-foss-2019b'
+    params:
+        nb='structural_mapping.Rmd',
+        md='structural_mapping.md'
+    shell:
+        """
+        R -e \"rmarkdown::render(input=\'{params.nb}\')\";
+        mv {params.md} {output.md}
+        """
+
+
 rule collapse_scores:
     input:
         config['Titeseq_Kds_file'],
+        config['Titeseq_TuGG_Kds_file'],
         config['expression_sortseq_file'],
-        config['PSR_bind_file']
+        config['PSR_bind_file'],
+        config['CGGnaive_site_info']
     output:
         config['final_variant_scores_mut_file'],
         md='results/summary/collapse_scores.md',
@@ -142,6 +170,27 @@ rule fit_titrations:
         nb='compute_binding_Kd.Rmd',
         md='compute_binding_Kd.md',
         md_files='compute_binding_Kd_files'
+    shell:
+        """
+        R -e \"rmarkdown::render(input=\'{params.nb}\')\";
+        mv {params.md} {output.md};
+        mv {params.md_files} {output.md_files}
+        """
+
+rule fit_titrations_TuGG:
+    input:
+        config['codon_variant_table_file'],
+        config['variant_counts_file']
+    output:
+        config['Titeseq_TuGG_Kds_file'],
+        md='results/summary/compute_binding_Kd_TuGG.md',
+        md_files=directory('results/summary/compute_binding_Kd_TuGG_files')
+    envmodules:
+        'R/3.6.2-foss-2019b'
+    params:
+        nb='compute_binding_Kd_TuGG.Rmd',
+        md='compute_binding_Kd_TuGG.md',
+        md_files='compute_binding_Kd_TuGG_files'
     shell:
         """
         R -e \"rmarkdown::render(input=\'{params.nb}\')\";
