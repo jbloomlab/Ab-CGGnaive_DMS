@@ -135,3 +135,23 @@ binding.site(pdb,
              cutoff=5,hydrogens=F)$resnames
 
 ```
+
+Below are heavy chain residues that are 5A or closer to light chain in each of the two protomers
+
+```{r heavy_contacts_with_light}
+binding.site(pdb,
+             a.inds=atom.select(pdb,chain=c("H","B")),
+             b.inds=atom.select(pdb,chain=c("L","C")),
+             cutoff=5,hydrogens=F)$resnames
+
+```
+
+Below are light chain residues that are 5A or closer to heavy chain in each of the two protomers
+
+```{r light_contacts_with_heavy}
+binding.site(pdb,
+             a.inds=atom.select(pdb,chain=c("L","C")),
+             b.inds=atom.select(pdb,chain=c("H","B")),
+             cutoff=5,hydrogens=F)$resnames
+
+```

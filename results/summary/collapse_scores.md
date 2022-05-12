@@ -48,7 +48,7 @@ sessionInfo()
 
     ## R version 3.6.2 (2019-12-12)
     ## Platform: x86_64-pc-linux-gnu (64-bit)
-    ## Running under: Ubuntu 18.04.5 LTS
+    ## Running under: Ubuntu 18.04.4 LTS
     ## 
     ## Matrix products: default
     ## BLAS/LAPACK: /app/software/OpenBLAS/0.3.7-GCC-8.3.0/lib/libopenblas_haswellp-r0.3.7.so
@@ -626,6 +626,27 @@ p1
 
 ``` r
 invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_delta-expression-by-target.pdf",sep="")))
+```
+
+And expression, hatchign out \>single-nt-accessible
+
+``` r
+p1 <- ggplot(temp[measurement=="delta_expr" & chain != "link",],aes(position_IMGT,mutant))+geom_tile(aes(fill=value),color="black",lwd=0.1)+
+  scale_fill_gradientn(colours=c("#A94E35","#F48365","#FFFFFF","#7378B9","#383C6C"),limits=c(-4,1),values=c(0/5,2/5,4/5,4.5/5,5/5),na.value="yellow")+
+  #scale_x_continuous(expand=c(0,0),breaks=c(1,seq(5,235,by=5)))+
+  labs(x="",y="")+theme_classic(base_size=9)+
+  coord_equal()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.6,face="bold",size=10),axis.text.y=element_text(face="bold",size=10))+
+  guides(y.sec=guide_axis_label_trans())+
+  geom_text(aes(label=wildtype_indicator),size=2,color="gray10")+
+  geom_text(aes(label=multimut_indicator),size=2.5,color="gray10")
+
+p1
+```
+
+<img src="collapse_scores_files/figure-gfm/heatmap_DMS_delta-expression-by-target_singlent-1.png" style="display: block; margin: auto;" />
+
+``` r
+invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/heatmap_SSM_delta-expression-by-target_singlent.pdf",sep="")))
 ```
 
 Make heatmaps faceted by target, showing raw polyspecificity and
