@@ -190,3 +190,41 @@ binding.site(pdb,
     ## [11] "TYR 114 (L)" "PRO 115 (L)" "ASN 38 (C)"  "TYR 55 (C)"  "SER 56 (C)" 
     ## [16] "TYR 66 (C)"  "ARG 67 (C)"  "TYR 68 (C)"  "SER 69 (C)"  "TYR 107 (C)"
     ## [21] "TYR 108 (C)" "SER 109 (C)" "TYR 114 (C)" "PRO 115 (C)"
+
+Below are heavy chain residues that are 5A or closer to light chain in
+each of the two protomers
+
+``` r
+binding.site(pdb,
+             a.inds=atom.select(pdb,chain=c("H","B")),
+             b.inds=atom.select(pdb,chain=c("L","C")),
+             cutoff=5,hydrogens=F)$resnames
+```
+
+    ##  [1] "VAL 2 (H)"   "ASN 40 (H)"  "ILE 42 (H)"  "LYS 44 (H)"  "ASN 48 (H)" 
+    ##  [6] "LEU 50 (H)"  "GLU 51 (H)"  "TYR 52 (H)"  "TYR 55 (H)"  "TYR 66 (H)" 
+    ## [11] "ASN 68 (H)"  "PRO 69 (H)"  "TYR 103 (H)" "ASP 107 (H)" "PHE 115 (H)"
+    ## [16] "ASP 116 (H)" "VAL 117 (H)" "TRP 118 (H)" "GLY 119 (H)" "ALA 120 (H)"
+    ## [21] "ASN 40 (B)"  "ILE 42 (B)"  "LYS 44 (B)"  "ASN 48 (B)"  "LEU 50 (B)" 
+    ## [26] "GLU 51 (B)"  "TYR 52 (B)"  "TYR 55 (B)"  "TYR 66 (B)"  "ASN 68 (B)" 
+    ## [31] "TYR 103 (B)" "ASP 107 (B)" "PHE 115 (B)" "ASP 116 (B)" "TRP 118 (B)"
+    ## [36] "GLY 119 (B)" "ALA 120 (B)"
+
+Below are light chain residues that are 5A or closer to heavy chain in
+each of the two protomers
+
+``` r
+binding.site(pdb,
+             a.inds=atom.select(pdb,chain=c("L","C")),
+             b.inds=atom.select(pdb,chain=c("H","B")),
+             cutoff=5,hydrogens=F)$resnames
+```
+
+    ##  [1] "PHE 42 (L)"  "GLN 44 (L)"  "SER 49 (L)"  "PRO 50 (L)"  "LYS 51 (L)" 
+    ##  [6] "SER 52 (L)"  "TYR 55 (L)"  "TYR 68 (L)"  "GLU 101 (L)" "PHE 103 (L)"
+    ## [11] "HIS 105 (L)" "GLN 106 (L)" "TYR 107 (L)" "TYR 114 (L)" "PRO 115 (L)"
+    ## [16] "LEU 116 (L)" "PHE 118 (L)" "SER 120 (L)" "GLY 121 (L)" "PHE 42 (C)" 
+    ## [21] "GLN 44 (C)"  "GLN 48 (C)"  "SER 49 (C)"  "PRO 50 (C)"  "SER 52 (C)" 
+    ## [26] "TYR 55 (C)"  "GLU 101 (C)" "PHE 103 (C)" "HIS 105 (C)" "GLN 106 (C)"
+    ## [31] "TYR 107 (C)" "TYR 114 (C)" "PRO 115 (C)" "LEU 116 (C)" "PHE 118 (C)"
+    ## [36] "SER 120 (C)" "GLY 121 (C)"
