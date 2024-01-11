@@ -3,10 +3,13 @@ Map DMS to the chIgY-Fab sturcture
 Tyler Starr
 4/29/2022
 
--   [Data input](#data-input)
--   [Compute site-wise metrics from DMS data for mapping to
-    structure](#compute-site-wise-metrics-from-dms-data-for-mapping-to-structure)
--   [Map metrics to the structure](#map-metrics-to-the-structure)
+- <a href="#data-input" id="toc-data-input">Data input</a>
+- <a
+  href="#compute-site-wise-metrics-from-dms-data-for-mapping-to-structure"
+  id="toc-compute-site-wise-metrics-from-dms-data-for-mapping-to-structure">Compute
+  site-wise metrics from DMS data for mapping to structure</a>
+- <a href="#map-metrics-to-the-structure"
+  id="toc-map-metrics-to-the-structure">Map metrics to the structure</a>
 
 This notebook analyzes the structure of the CGGnaive Fab bound to the
 chicken IgY dimer. It generates a list of inter-residue distances and
@@ -17,6 +20,7 @@ PyMol.
 require("knitr")
 knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
+options(repos = c(CRAN = "https://cran.r-project.org"))
 
 #list of packages to install/load
 packages = c("yaml","data.table","tidyverse","gridExtra","bio3d","ggrepel")
@@ -43,12 +47,12 @@ Session info for reproducing environment:
 sessionInfo()
 ```
 
-    ## R version 3.6.2 (2019-12-12)
-    ## Platform: x86_64-pc-linux-gnu (64-bit)
-    ## Running under: Ubuntu 18.04.4 LTS
+    ## R version 3.6.3 (2020-02-29)
+    ## Platform: x86_64-conda-linux-gnu (64-bit)
+    ## Running under: Ubuntu 18.04.6 LTS
     ## 
     ## Matrix products: default
-    ## BLAS/LAPACK: /app/software/OpenBLAS/0.3.7-GCC-8.3.0/lib/libopenblas_haswellp-r0.3.7.so
+    ## BLAS/LAPACK: /fh/fast/matsen_e/jgallowa/Ab-CGGnaive_DMS/.snakemake/conda/14854db9156898a213246f7d6480a8f3_/lib/libopenblasp-r0.3.28.so
     ## 
     ## locale:
     ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -62,24 +66,25 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] ggrepel_0.8.1     bio3d_2.4-0       gridExtra_2.3     forcats_0.4.0    
-    ##  [5] stringr_1.4.0     dplyr_0.8.3       purrr_0.3.3       readr_1.3.1      
-    ##  [9] tidyr_1.0.0       tibble_3.0.2      ggplot2_3.3.0     tidyverse_1.3.0  
-    ## [13] data.table_1.12.8 yaml_2.2.0        knitr_1.26       
+    ##  [1] ggrepel_0.9.6     bio3d_2.4-5       gridExtra_2.3     forcats_0.5.1    
+    ##  [5] stringr_1.4.0     dplyr_1.0.6       purrr_0.3.4       readr_1.4.0      
+    ##  [9] tidyr_1.1.3       tibble_3.1.2      ggplot2_3.3.3     tidyverse_1.3.1  
+    ## [13] data.table_1.14.0 yaml_2.2.1        knitr_1.33       
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] tidyselect_1.1.0 xfun_0.11        haven_2.2.0      colorspace_1.4-1
-    ##  [5] vctrs_0.3.1      generics_0.0.2   htmltools_0.4.0  rlang_0.4.7     
-    ##  [9] pillar_1.4.5     glue_1.3.1       withr_2.1.2      DBI_1.1.0       
-    ## [13] dbplyr_1.4.2     modelr_0.1.5     readxl_1.3.1     lifecycle_0.2.0 
-    ## [17] munsell_0.5.0    gtable_0.3.0     cellranger_1.1.0 rvest_0.3.5     
-    ## [21] evaluate_0.14    parallel_3.6.2   fansi_0.4.0      broom_0.7.0     
-    ## [25] Rcpp_1.0.3       scales_1.1.0     backports_1.1.5  jsonlite_1.6    
-    ## [29] fs_1.3.1         hms_0.5.2        digest_0.6.23    stringi_1.4.3   
-    ## [33] grid_3.6.2       cli_2.0.0        tools_3.6.2      magrittr_1.5    
-    ## [37] crayon_1.3.4     pkgconfig_2.0.3  ellipsis_0.3.0   xml2_1.2.2      
-    ## [41] reprex_0.3.0     lubridate_1.7.4  assertthat_0.2.1 rmarkdown_2.0   
-    ## [45] httr_1.4.1       rstudioapi_0.10  R6_2.4.1         compiler_3.6.2
+    ##  [1] tidyselect_1.1.1  xfun_0.23         haven_2.4.1       colorspace_2.0-1 
+    ##  [5] vctrs_0.3.8       generics_0.1.0    htmltools_0.5.1.1 utf8_1.2.1       
+    ##  [9] rlang_0.4.11      pillar_1.6.1      glue_1.4.2        withr_3.0.2      
+    ## [13] DBI_1.1.1         dbplyr_2.1.1      modelr_0.1.8      readxl_1.3.1     
+    ## [17] lifecycle_1.0.0   munsell_0.5.0     gtable_0.3.0      cellranger_1.1.0 
+    ## [21] rvest_1.0.0       evaluate_0.14     ps_1.6.0          parallel_3.6.3   
+    ## [25] fansi_0.4.2       broom_0.7.6       Rcpp_1.0.13-1     scales_1.1.1     
+    ## [29] backports_1.2.1   jsonlite_1.7.2    fs_1.5.0          hms_1.1.0        
+    ## [33] digest_0.6.27     stringi_1.6.2     grid_3.6.3        cli_2.5.0        
+    ## [37] tools_3.6.3       magrittr_2.0.1    crayon_1.4.1      pkgconfig_2.0.3  
+    ## [41] ellipsis_0.3.2    xml2_1.3.2        reprex_2.0.0      lubridate_1.7.10 
+    ## [45] assertthat_0.2.1  rmarkdown_2.8     httr_1.4.2        rstudioapi_0.13  
+    ## [49] R6_2.5.0          compiler_3.6.3
 
 ## Data input
 
@@ -113,7 +118,7 @@ sites$mean_CGG_bind <- NA
 sites$max_CGG_bind <- NA
 sites$quartile75_CGG_bind <- NA
 sites$mean_expression <- NA
-sites$mean_polyspecificity <- NA
+# sites$mean_polyspecificity <- NA
   
 for(i in 1:nrow(sites)){
   if(sites[i,"chain"] != "link"){
@@ -121,7 +126,7 @@ for(i in 1:nrow(sites)){
     sites$max_CGG_bind[i] <- max(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],na.rm=T)
     sites$quartile75_CGG_bind[i] <- quantile(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],0.75,na.rm=T)
     sites$mean_expression[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_expr>3,delta_expr],na.rm=T)
-    sites$mean_polyspecificity[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_psr>3,delta_psr],na.rm=T)
+    # sites$mean_polyspecificity[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_psr>3,delta_psr],na.rm=T)
   }
 }
 ```
@@ -133,7 +138,7 @@ b_mean_CGG <- rep(0, length(pdb$atom$b))
 b_max_CGG <- rep(0, length(pdb$atom$b))
 b_75th_CGG <- rep(0, length(pdb$atom$b))
 b_mean_expr <- rep(0, length(pdb$atom$b))
-b_mean_psr <- rep(0, length(pdb$atom$b))
+# b_mean_psr <- rep(0, length(pdb$atom$b))
 for(i in 1:nrow(pdb$atom)){
   res <- pdb$atom$resno[i]
   if(pdb$atom$chain[i] %in% c("B","H") & res %in% sites[sites$chain=="H","site"]){
@@ -141,20 +146,20 @@ for(i in 1:nrow(pdb$atom)){
     b_max_CGG[i] <- sites[sites$site==res & sites$chain=="H","max_CGG_bind"]
     b_75th_CGG[i] <- sites[sites$site==res & sites$chain=="H","quartile75_CGG_bind"]
     b_mean_expr[i] <- sites[sites$site==res & sites$chain=="H","mean_expression"]
-    b_mean_psr[i] <- sites[sites$site==res & sites$chain=="H","mean_polyspecificity"]
+    # b_mean_psr[i] <- sites[sites$site==res & sites$chain=="H","mean_polyspecificity"]
   }else if(pdb$atom$chain[i] %in% c("C","L") & res %in% sites[sites$chain=="L","site"]){
     b_mean_CGG[i] <- sites[sites$site==res & sites$chain=="L","mean_CGG_bind"]
     b_max_CGG[i] <- sites[sites$site==res & sites$chain=="L","max_CGG_bind"]
     b_75th_CGG[i] <- sites[sites$site==res & sites$chain=="L","quartile75_CGG_bind"]
     b_mean_expr[i] <- sites[sites$site==res & sites$chain=="L","mean_expression"]
-    b_mean_psr[i] <- sites[sites$site==res & sites$chain=="L","mean_polyspecificity"]
+    # b_mean_psr[i] <- sites[sites$site==res & sites$chain=="L","mean_polyspecificity"]
   }
 }
 write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/CGG_mean.pdb",sep=""), b=b_mean_CGG)
 write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/CGG_max.pdb",sep=""), b=b_max_CGG)
 write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/CGG_75th.pdb",sep=""), b=b_75th_CGG)
 write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/expression_mean.pdb",sep=""), b=b_mean_expr)
-write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/psr_mean.pdb",sep=""), b=b_mean_psr)
+# write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/psr_mean.pdb",sep=""), b=b_mean_psr)
 ```
 
 Generate a list of contact residues (5A or closer contacts)

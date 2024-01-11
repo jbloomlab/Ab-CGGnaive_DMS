@@ -1,0 +1,12 @@
+name: prep_barcodes
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12
+  - pandas
+  - numpy
+  - jupyter
+  - jupyter_contrib_nbextensions
+  - matplotlib
+  - seaborn

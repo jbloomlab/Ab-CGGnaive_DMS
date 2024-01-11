@@ -7,33 +7,12 @@
 *.Log
 *.out
 
+Attic/
+
 src/
 env/
 
-results/*
-!results/summary
-
-!results/variants
-results/variants/*
-!results/variants/codon_variant_table.csv
-
-!results/counts
-results/counts/*
-!results/counts/variant_counts.csv
-
-!results/expression_meanF
-results/expression_meanF/*
-!results/expression_meanF/bc_expression.csv
-
-!results/binding_Kd
-results/binding_Kd/*
-!results/binding_Kd/bc_binding.csv
-!results/binding_Kd/bc_binding_TuGG.csv
-
-!results/PSR_bind
-results/PSR_bind/*
-!results/PSR_bind/bc_polyspecificity.csv
-
-!results/final_variant_scores
-results/final_variant_scores/*
-!results/final_variant_scores/final_variant_scores.csv
+# Output by the pipeline, but not tracked
+results/expression_meanF/violin-plot_meanF-by-target.pdf
+results/final_variant_scores/*.pdf
+results/structural_mapping

@@ -15,6 +15,7 @@ This notebook analyzes the structure of the CGGnaive Fab bound to the chicken Ig
 require("knitr")
 knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
+options(repos = c(CRAN = "https://cran.r-project.org"))
 
 #list of packages to install/load
 packages = c("yaml","data.table","tidyverse","gridExtra","bio3d","ggrepel")
@@ -68,7 +69,7 @@ sites$mean_CGG_bind <- NA
 sites$max_CGG_bind <- NA
 sites$quartile75_CGG_bind <- NA
 sites$mean_expression <- NA
-sites$mean_polyspecificity <- NA
+# sites$mean_polyspecificity <- NA
   
 for(i in 1:nrow(sites)){
   if(sites[i,"chain"] != "link"){
@@ -76,7 +77,7 @@ for(i in 1:nrow(sites)){
     sites$max_CGG_bind[i] <- max(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],na.rm=T)
     sites$quartile75_CGG_bind[i] <- quantile(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_bind_CGG>3,delta_bind_CGG],0.75,na.rm=T)
     sites$mean_expression[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_expr>3,delta_expr],na.rm=T)
-    sites$mean_polyspecificity[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_psr>3,delta_psr],na.rm=T)
+    # sites$mean_polyspecificity[i] <- mean(dt[position_IMGT==sites[i,"site"] & chain==sites[i,"chain"] & wildtype != mutant & n_bc_psr>3,delta_psr],na.rm=T)
   }
 }
 
@@ -89,7 +90,7 @@ b_mean_CGG <- rep(0, length(pdb$atom$b))
 b_max_CGG <- rep(0, length(pdb$atom$b))
 b_75th_CGG <- rep(0, length(pdb$atom$b))
 b_mean_expr <- rep(0, length(pdb$atom$b))
-b_mean_psr <- rep(0, length(pdb$atom$b))
+# b_mean_psr <- rep(0, length(pdb$atom$b))
 for(i in 1:nrow(pdb$atom)){
   res <- pdb$atom$resno[i]
   if(pdb$atom$chain[i] %in% c("B","H") & res %in% sites[sites$chain=="H","site"]){
@@ -97,20 +98,20 @@ for(i in 1:nrow(pdb$atom)){
     b_max_CGG[i] <- sites[sites$site==res & sites$chain=="H","max_CGG_bind"]
     b_75th_CGG[i] <- sites[sites$site==res & sites$chain=="H","quartile75_CGG_bind"]
     b_mean_expr[i] <- sites[sites$site==res & sites$chain=="H","mean_expression"]
-    b_mean_psr[i] <- sites[sites$site==res & sites$chain=="H","mean_polyspecificity"]
+    # b_mean_psr[i] <- sites[sites$site==res & sites$chain=="H","mean_polyspecificity"]
   }else if(pdb$atom$chain[i] %in% c("C","L") & res %in% sites[sites$chain=="L","site"]){
     b_mean_CGG[i] <- sites[sites$site==res & sites$chain=="L","mean_CGG_bind"]
     b_max_CGG[i] <- sites[sites$site==res & sites$chain=="L","max_CGG_bind"]
     b_75th_CGG[i] <- sites[sites$site==res & sites$chain=="L","quartile75_CGG_bind"]
     b_mean_expr[i] <- sites[sites$site==res & sites$chain=="L","mean_expression"]
-    b_mean_psr[i] <- sites[sites$site==res & sites$chain=="L","mean_polyspecificity"]
+    # b_mean_psr[i] <- sites[sites$site==res & sites$chain=="L","mean_polyspecificity"]
   }
 }
 write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/CGG_mean.pdb",sep=""), b=b_mean_CGG)
 write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/CGG_max.pdb",sep=""), b=b_max_CGG)
 write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/CGG_75th.pdb",sep=""), b=b_75th_CGG)
 write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/expression_mean.pdb",sep=""), b=b_mean_expr)
-write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/psr_mean.pdb",sep=""), b=b_mean_psr)
+# write.pdb(pdb=pdb, file=paste(config$structural_mapping_dir,"/psr_mean.pdb",sep=""), b=b_mean_psr)
 
 ```
 
