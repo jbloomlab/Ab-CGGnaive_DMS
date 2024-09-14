@@ -167,7 +167,7 @@ rule Titeseq_modeling:
         config['facs_file_pattern']
     output:
         config['new_final_variant_scores_mut_file'],
-        md='results/summary/Titeseq-modeling.md',
+        nb_markdown=nb_markdown('Titeseq-modeling.ipynb'),
     params:
         nb='Titeseq-modeling.ipynb',
     shell:

@@ -83,17 +83,16 @@ prepped_barcode_counts_file: results/aggregated_counts/prepped_barcode_counts.cs
 # FACS file pattern for Titeseq-modeling.ipynb
 facs_file_pattern: exptl_data/210624_TiteSeq_CGG/FCS_scFvpos/Specimen_001_sample_*
 
-new_final_variant_scores_dir: results/Titeseq_modeling_final_variant_scores
+new_final_variant_scores_dir: results/Titeseq_modeling
 
-## CONSTRUCTION, HERE 
-old_final_variant_scores_mut_file: &final_variant_scores_mut_file
+## HERE 
+# old_final_variant_scores_mut_file: *final_variant_scores_mut_file
 # TODO global replace improved_Kd_fitting with "" to replace old approach
-new_final_variant_scores_mut_file: &new_final_variant_scores_dir/final_variant_scores.csv
+new_final_variant_scores_mut_file: results/Titeseq_modeling/final_variant_scores.csv
 
 # TODO so we still would need to merge this final mut variant stuff
 # into the structural componant, yes? or no?
 
-# TODO I've tried abstracting things such that this could be done with TuGG
 concentrations:
   CGG: [1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-12, 1e-13, 0]
   # TODO: wait I think TuGG number is not sequential, it skips eight?
