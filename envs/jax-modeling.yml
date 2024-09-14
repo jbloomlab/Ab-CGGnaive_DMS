@@ -1,0 +1,15 @@
+name: titeseq
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - git-lfs
+  - python=3.12
+  - fcsparser
+  - jax
+  - jaxopt
+  - seaborn
+  - pandas
+  - jupyter
+  - pip

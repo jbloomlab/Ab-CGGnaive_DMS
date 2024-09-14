@@ -104,6 +104,7 @@ rule make_summary:
             """
             ).strip())
 
+# TODO remove and just add the dag argument to `snakemake` call
 rule make_dag:
     # error message, but works: https://github.com/sequana/sequana/issues/115
     input:
@@ -155,6 +156,22 @@ rule collapse_scores:
         mv {params.md} {output.md};
         mv {params.md_files} {output.md_files}
         """
+
+rule Titeseq_modeling:
+    input:
+        config['prepped_barcode_counts_file'],
+        config['prepped_variant_counts_file'],
+        config['barcode_runs'],
+        config['CGGnaive_site_info'],
+        config['final_variant_scores_mut_file'],
+        config['facs_file_pattern']
+    output:
+        config['new_final_variant_scores_mut_file'],
+        md='results/summary/Titeseq-modeling.md',
+    params:
+        nb='Titeseq-modeling.ipynb',
+    shell:
+        "python scripts/run_nb.py {params.nb} {output.nb_markdown}"
 
 rule fit_titrations:
     input:
@@ -240,6 +257,24 @@ rule calculate_expression:
         mv {params.md_files} {output.md_files}
         """
 
+rule prep_Titeseq_barcodes:
+    """
+    Merge annotations, normalize counts, filter variants, 
+    and aggregate barcode counts.
+    """
+    input:
+        config['codon_variant_table_file'],
+        config['variant_counts_file'],
+        config['barcode_runs']
+    output:
+        config['prepped_barcode_counts_file'],
+        config['prepped_variant_counts_file'],
+        nb_markdown=nb_markdown('prep_Titeseq_barcodes.ipynb')
+    params:
+        nb='prep-Titeseq-barcodes.ipynb'
+    shell:
+        "python scripts/run_nb.py {params.nb} {output.nb_markdown}"
+
 rule count_variants:
     """Count codon variants from Illumina barcode runs."""
     input:
@@ -252,7 +287,6 @@ rule count_variants:
         nb='count_variants.ipynb'
     shell:
         "python scripts/run_nb.py {params.nb} {output.nb_markdown}"
-
 
 rule process_ccs:
     """Process the PacBio CCSs and build variant table."""
