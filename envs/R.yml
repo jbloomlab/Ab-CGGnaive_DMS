@@ -1,7 +1,7 @@
 name: my_r_env
 channels:
   - conda-forge
-  - defaults
+  - bioconda
 dependencies:
   - r-base=3.6.2
   - r-essentials  # This includes many common R packages like tidyverse, devtools, etc.
@@ -11,4 +11,3 @@ dependencies:
   - r-readr
   - r-shiny
   - r-rmarkdown
-  - rpy2  # Optional: For using R from Python

@@ -121,8 +121,10 @@ rule structural_mapping:
         config['pdb']
     output:
         md='results/summary/structural_mapping.md'
-    envmodules:
-        'R/3.6.2-foss-2019b'
+    conda:
+        'envs/structural_mapping.yml'
+    # envmodules:
+        # 'R/3.6.2-foss-2019b'
     params:
         nb='structural_mapping.Rmd',
         md='structural_mapping.md'
@@ -144,8 +146,10 @@ rule collapse_scores:
         config['final_variant_scores_mut_file'],
         md='results/summary/collapse_scores.md',
         md_files=directory('results/summary/collapse_scores_files')
-    envmodules:
-        'R/3.6.2-foss-2019b'
+    conda:
+        'envs/structural_mapping.yml'
+    # envmodules:
+        # 'R/3.6.2-foss-2019b'
     params:
         nb='collapse_scores.Rmd',
         md='collapse_scores.md',
@@ -168,6 +172,8 @@ rule Titeseq_modeling:
     output:
         config['new_final_variant_scores_mut_file'],
         nb_markdown=nb_markdown('Titeseq-modeling.ipynb'),
+    conda:
+        'envs/jax.yml'
     params:
         nb='Titeseq-modeling.ipynb',
     shell:
@@ -181,8 +187,10 @@ rule fit_titrations:
         config['Titeseq_Kds_file'],
         md='results/summary/compute_binding_Kd.md',
         md_files=directory('results/summary/compute_binding_Kd_files')
-    envmodules:
-        'R/3.6.2-foss-2019b'
+    # envmodules:
+        # 'R/3.6.2-foss-2019b'
+    conda:
+        'envs/R.yml'
     params:
         nb='compute_binding_Kd.Rmd',
         md='compute_binding_Kd.md',
@@ -202,8 +210,10 @@ rule fit_titrations_TuGG:
         config['Titeseq_TuGG_Kds_file'],
         md='results/summary/compute_binding_Kd_TuGG.md',
         md_files=directory('results/summary/compute_binding_Kd_TuGG_files')
-    envmodules:
-        'R/3.6.2-foss-2019b'
+    # envmodules:
+        # 'R/3.6.2-foss-2019b'
+    conda:
+        'envs/R.yml'
     params:
         nb='compute_binding_Kd_TuGG.Rmd',
         md='compute_binding_Kd_TuGG.md',
@@ -223,8 +233,10 @@ rule calculate_PSR_binding:
         config['PSR_bind_file'],
         md='results/summary/compute_binding_PSR.md',
         md_files=directory('results/summary/compute_binding_PSR_files')
-    envmodules:
-        'R/3.6.2-foss-2019b'
+    # envmodules:
+        # 'R/3.6.2-foss-2019b'
+    conda:
+        'envs/R.yml'
     params:
         nb='compute_binding_PSR.Rmd',
         md='compute_binding_PSR.md',
@@ -244,8 +256,10 @@ rule calculate_expression:
         config['expression_sortseq_file'],
         md='results/summary/compute_expression_meanF.md',
         md_files=directory('results/summary/compute_expression_meanF_files')
-    envmodules:
-        'R/3.6.2-foss-2019b'
+    # envmodules:
+        # 'R/3.6.2-foss-2019b'
+    conda:
+        'envs/R.yml'
     params:
         nb='compute_expression_meanF.Rmd',
         md='compute_expression_meanF.md',
@@ -270,6 +284,8 @@ rule prep_Titeseq_barcodes:
         config['prepped_barcode_counts_file'],
         config['prepped_variant_counts_file'],
         nb_markdown=nb_markdown('prep_Titeseq_barcodes.ipynb')
+    conda:
+        
     params:
         nb='prep-Titeseq-barcodes.ipynb'
     shell:

@@ -2,7 +2,6 @@ name: titeseq
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - git-lfs
   - python=3.12
@@ -12,4 +11,5 @@ dependencies:
   - seaborn
   - pandas
   - jupyter
+  - jupyter_contrib_nbextensions
   - pip
