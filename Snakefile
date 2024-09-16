@@ -8,10 +8,10 @@ import os
 import textwrap
 import urllib.request
 
-import Bio.SeqIO
+# import Bio.SeqIO
 
-import dms_variants.codonvarianttable
-import dms_variants.illuminabarcodeparser
+# import dms_variants.codonvarianttable
+# import dms_variants.illuminabarcodeparser
 
 import pandas as pd
 
@@ -19,8 +19,8 @@ import pandas as pd
 configfile: 'config.yaml'
 
 # run "quick" rules locally:
-localrules: make_dag,
-            make_summary
+# localrules: make_dag,
+#             make_summary
 
 # Functions -------------------------------------------------------------------
 def nb_markdown(nb):
@@ -49,6 +49,11 @@ rule make_summary:
         barcode_variant_table=config['codon_variant_table_file'],
         variant_counts_file=config['variant_counts_file'],
         count_variants=nb_markdown('count_variants.ipynb'),
+        prepped_barcode_counts_file=config['prepped_barcode_counts_file'],
+        prepped_variant_counts_file=config['prepped_variant_counts_file'],
+        prep_Titeseq_barcodes=nb_markdown('prep_Titeseq_barcodes.ipynb'),
+        new_final_variant_scores_mut_file=config['new_final_variant_scores_mut_file'],
+        Titeseq_modeling=nb_markdown('Titeseq-modeling.ipynb'),
         fit_titrations='results/summary/compute_binding_Kd.md',
         variant_Kds_file=config['Titeseq_Kds_file'],
         fit_titrations_TuGG='results/summary/compute_binding_Kd_TuGG.md',
@@ -63,10 +68,15 @@ rule make_summary:
         
     output:
         summary = os.path.join(config['summary_dir'], 'summary.md')
+    # conda:
+        # 'envs/prep_Titeseq_barcodes.yml'
+    log:
+        os.path.join(config['summary_dir'], 'summary.log')
     run:
         def path(f):
             """Get path relative to `summary_dir`."""
             return os.path.relpath(f, config['summary_dir'])
+        print("YO")
         with open(output.summary, 'w') as f:
             f.write(textwrap.dedent(f"""
             # Summary
@@ -82,37 +92,47 @@ rule make_summary:
             Here is the Markdown output of each Jupyter notebook in the
             workflow:
             
-            1. [Process PacBio CCSs]({path(input.process_ccs)}). Creates a [barcode-variant lookup table]({path(input.barcode_variant_table)}).
+            1.  [Process PacBio CCSs]({path(input.process_ccs)}). Creates a [barcode-variant lookup table]({path(input.barcode_variant_table)}).
             
-            2. [Count variants by barcode]({path(input.count_variants)}).
-               Creates a [variant counts file]({path(input.variant_counts_file)})
-               giving counts of each barcoded variant in each condition.
+            2.  [Count variants by barcode]({path(input.count_variants)}).
+                Creates a [variant counts file]({path(input.variant_counts_file)})
+                giving counts of each barcoded variant in each condition.
 
-            3. [Fit CGG-binding titration curves]({path(input.fit_titrations)}) to calculate per-barcode K<sub>D</sub>, recorded in [this file]({path(input.variant_Kds_file)}).
-            
-            4. [Fit TuGG-binding titration curves]({path(input.fit_titrations_TuGG)}) to calculate per-barcode K<sub>D</sub>, recorded in [this file]({path(input.variant_TuGG_Kds_file)}).
+            3.  [Prep Titseq Barcodes]({path(input.prep_Titeseq_barcodes)}) produces
+                [prepped barcode counts]({path(input.prepped_barcode_counts_file)}) and 
+                [prepped variant counts]({path(input.prepped_variant_counts_file)}).
+                These are the barcode and variant counts after merging substitution annotations, 
+                normalizing counts, filtering variants, and aggregating (for variant counts) barcode counts.
 
-            5. [Fit polyspecificity reagent binding Sort-seq]({path(input.fit_PSR_curves)}) to calculate per-barcode polyspecificity score, recorded in [this file]({path(input.variant_PSR_file)}).
+            4.  [Tite-seq modeling]({path(input.new_final_variant_scores_mut_file)}).
+                This notebook fits a model to the Tite-seq data to estimate the binding affinity of each variant to the CGG antibody.
+                The results are recorded in [this file]({path(input.new_final_variant_scores_mut_file)}).
+
+            5.  [Fit CGG-binding titration curves]({path(input.fit_titrations)}) to calculate per-barcode K<sub>D</sub>, recorded in [this file]({path(input.variant_Kds_file)}).
             
-            6. [Analyze Sort-seq]({path(input.calculate_expression)}) to calculate per-barcode RBD expression, recorded in [this file]({path(input.variant_expression_file)}).
+            6.  [Fit TuGG-binding titration curves]({path(input.fit_titrations_TuGG)}) to calculate per-barcode K<sub>D</sub>, recorded in [this file]({path(input.variant_TuGG_Kds_file)}).
+
+            7.  [Fit polyspecificity reagent binding Sort-seq]({path(input.fit_PSR_curves)}) to calculate per-barcode polyspecificity score, recorded in [this file]({path(input.variant_PSR_file)}).
             
-            7. [Derive final genotype-level phenotypes from replicate barcoded sequences]({path(input.collapse_scores)}).
-               Generates final phenotypes, recorded in [this file]({path(input.mut_phenos_file)}).
+            8.  [Analyze Sort-seq]({path(input.calculate_expression)}) to calculate per-barcode RBD expression, recorded in [this file]({path(input.variant_expression_file)}).
+            
+            9.  [Derive final genotype-level phenotypes from replicate barcoded sequences]({path(input.collapse_scores)}).
+                Generates final phenotypes, recorded in [this file]({path(input.mut_phenos_file)}).
                
-               8. [Map DMS phenotypes to the CGG-bound antibody structure]({path(input.structural_mapping)}).
+            10. [Map DMS phenotypes to the CGG-bound antibody structure]({path(input.structural_mapping)}).
 
             """
             ).strip())
 
 # TODO remove and just add the dag argument to `snakemake` call
-rule make_dag:
+# rule make_dag:
     # error message, but works: https://github.com/sequana/sequana/issues/115
-    input:
-        workflow.snakefile
-    output:
-        os.path.join(config['summary_dir'], 'dag.svg')
-    shell:
-        "snakemake --forceall --dag | dot -Tsvg > {output}"
+    # input:
+        # workflow.snakefile
+    # output:
+        # os.path.join(config['summary_dir'], 'dag.svg')
+    # shell:
+        # "snakemake --forceall --dag | dot -Tsvg > {output}"
 
 rule structural_mapping:
     input:
@@ -168,12 +188,12 @@ rule Titeseq_modeling:
         config['barcode_runs'],
         config['CGGnaive_site_info'],
         config['final_variant_scores_mut_file'],
-        config['facs_file_pattern']
+        facs_specimen_data = [f for f in glob.glob(config['facs_file_pattern'])]
     output:
         config['new_final_variant_scores_mut_file'],
         nb_markdown=nb_markdown('Titeseq-modeling.ipynb'),
     conda:
-        'envs/jax.yml'
+        'envs/Titeseq_modeling.yml'
     params:
         nb='Titeseq-modeling.ipynb',
     shell:
@@ -285,7 +305,7 @@ rule prep_Titeseq_barcodes:
         config['prepped_variant_counts_file'],
         nb_markdown=nb_markdown('prep_Titeseq_barcodes.ipynb')
     conda:
-        
+        'envs/prep_Titeseq_barcodes.yml'        
     params:
         nb='prep-Titeseq-barcodes.ipynb'
     shell:
