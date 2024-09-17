@@ -94,19 +94,11 @@ rule make_summary:
             
             1.  [Process PacBio CCSs]({path(input.process_ccs)}). Creates a [barcode-variant lookup table]({path(input.barcode_variant_table)}).
             
-            2.  [Count variants by barcode]({path(input.count_variants)}).
-                Creates a [variant counts file]({path(input.variant_counts_file)})
-                giving counts of each barcoded variant in each condition.
+            2.  [Count variants by barcode]({path(input.count_variants)}). Creates a [variant counts file]({path(input.variant_counts_file)}) giving counts of each barcoded variant in each condition.
 
-            3.  [Prep Titseq Barcodes]({path(input.prep_Titeseq_barcodes)}) produces
-                [prepped barcode counts]({path(input.prepped_barcode_counts_file)}) and 
-                [prepped variant counts]({path(input.prepped_variant_counts_file)}).
-                These are the barcode and variant counts after merging substitution annotations, 
-                normalizing counts, filtering variants, and aggregating (for variant counts) barcode counts.
+            3.  [Prep Titseq Barcodes]({path(input.prep_Titeseq_barcodes)}) produces [prepped barcode counts]({path(input.prepped_barcode_counts_file)}) and [prepped variant counts]({path(input.prepped_variant_counts_file)}). These are the barcode and variant counts after merging substitution annotations, normalizing counts, filtering variants, and aggregating (for variant counts) barcode counts.
 
-            4.  [Tite-seq modeling]({path(input.new_final_variant_scores_mut_file)}).
-                This notebook fits a model to the Tite-seq data to estimate the binding affinity of each variant to the CGG antibody.
-                The results are recorded in [this file]({path(input.new_final_variant_scores_mut_file)}).
+            4.  [Tite-seq modeling]({path(input.new_final_variant_scores_mut_file)}). This notebook fits a model to the Tite-seq data to estimate the binding affinity of each variant to the CGG antibody. The results are recorded in [this file]({path(input.new_final_variant_scores_mut_file)}).
 
             5.  [Fit CGG-binding titration curves]({path(input.fit_titrations)}) to calculate per-barcode K<sub>D</sub>, recorded in [this file]({path(input.variant_Kds_file)}).
             
@@ -116,8 +108,7 @@ rule make_summary:
             
             8.  [Analyze Sort-seq]({path(input.calculate_expression)}) to calculate per-barcode RBD expression, recorded in [this file]({path(input.variant_expression_file)}).
             
-            9.  [Derive final genotype-level phenotypes from replicate barcoded sequences]({path(input.collapse_scores)}).
-                Generates final phenotypes, recorded in [this file]({path(input.mut_phenos_file)}).
+            9.  [Derive final genotype-level phenotypes from replicate barcoded sequences]({path(input.collapse_scores)}). Generates final phenotypes, recorded in [this file]({path(input.mut_phenos_file)}).
                
             10. [Map DMS phenotypes to the CGG-bound antibody structure]({path(input.structural_mapping)}).
 
@@ -142,7 +133,7 @@ rule structural_mapping:
     output:
         md='results/summary/structural_mapping.md'
     conda:
-        'envs/structural_mapping.yml'
+        'envs/R.yml'
     # envmodules:
         # 'R/3.6.2-foss-2019b'
     params:
@@ -167,7 +158,7 @@ rule collapse_scores:
         md='results/summary/collapse_scores.md',
         md_files=directory('results/summary/collapse_scores_files')
     conda:
-        'envs/structural_mapping.yml'
+        'envs/R.yml'
     # envmodules:
         # 'R/3.6.2-foss-2019b'
     params:
@@ -327,11 +318,10 @@ rule count_variants:
 rule process_ccs:
     """Process the PacBio CCSs and build variant table."""
     input:
-        expand(os.path.join(config['ccs_dir'], "{pacbioRun}_ccs.fastq.gz"),
-               pacbioRun=pacbio_runs['pacbioRun']),
+        expand(os.path.join(config['ccs_dir'], "{pacbioRun}_ccs.fastq.gz"), pacbioRun=pacbio_runs['pacbioRun']),
     output:
         config['processed_ccs_file'],
-    	config['codon_variant_table_file'],
+        config['codon_variant_table_file'],
         nb_markdown=nb_markdown('process_ccs.ipynb')
     params:
         nb='process_ccs.ipynb'
