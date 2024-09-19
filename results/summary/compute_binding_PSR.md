@@ -44,7 +44,7 @@ sessionInfo()
     ## Running under: Ubuntu 18.04.6 LTS
     ## 
     ## Matrix products: default
-    ## BLAS/LAPACK: /fh/fast/matsen_e/jgallowa/Ab-CGG-fresh-clone-test/Ab-CGGnaive_DMS/.snakemake/conda/5f1278a07529f90e0fd92a89105680e0_/lib/libopenblasp-r0.3.27.so
+    ## BLAS/LAPACK: /fh/fast/matsen_e/jgallowa/Ab-CGGnaive_DMS/.snakemake/conda/2d5cf4fed99e91ae882f671993d1c07c_/lib/libopenblasp-r0.3.27.so
     ## 
     ## locale:
     ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              

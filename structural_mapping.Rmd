@@ -15,6 +15,7 @@ This notebook analyzes the structure of the CGGnaive Fab bound to the chicken Ig
 require("knitr")
 knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
+options(repos = c(CRAN = "https://cran.r-project.org"))
 
 #list of packages to install/load
 packages = c("yaml","data.table","tidyverse","gridExtra","bio3d","ggrepel")

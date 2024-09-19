@@ -8,6 +8,12 @@ import os
 import textwrap
 import urllib.request
 
+# TODO make logging a thing for the entire workflow
+# TODO remove the pipeline need to run the first two rules, process_ccs and count_variants
+# TODO add the dag argument to the snakemake call
+# TODO create a container based up this environment, maybe?
+# TODO 
+
 # import Bio.SeqIO
 
 # import dms_variants.codonvarianttable
@@ -49,6 +55,7 @@ rule make_summary:
         barcode_variant_table=config['codon_variant_table_file'],
         variant_counts_file=config['variant_counts_file'],
         count_variants=nb_markdown('count_variants.ipynb'),
+        # TODO add these back in
         prepped_barcode_counts_file=config['prepped_barcode_counts_file'],
         prepped_variant_counts_file=config['prepped_variant_counts_file'],
         prep_Titeseq_barcodes=nb_markdown('prep_Titeseq_barcodes.ipynb'),
@@ -68,15 +75,12 @@ rule make_summary:
         
     output:
         summary = os.path.join(config['summary_dir'], 'summary.md')
-    # conda:
-        # 'envs/prep_Titeseq_barcodes.yml'
     log:
         os.path.join(config['summary_dir'], 'summary.log')
     run:
         def path(f):
             """Get path relative to `summary_dir`."""
             return os.path.relpath(f, config['summary_dir'])
-        print("YO")
         with open(output.summary, 'w') as f:
             f.write(textwrap.dedent(f"""
             # Summary
@@ -116,14 +120,14 @@ rule make_summary:
             ).strip())
 
 # TODO remove and just add the dag argument to `snakemake` call
-# rule make_dag:
+rule make_dag:
     # error message, but works: https://github.com/sequana/sequana/issues/115
-    # input:
-        # workflow.snakefile
-    # output:
-        # os.path.join(config['summary_dir'], 'dag.svg')
-    # shell:
-        # "snakemake --forceall --dag | dot -Tsvg > {output}"
+    input:
+        workflow.snakefile
+    output:
+        os.path.join(config['summary_dir'], 'dag.svg')
+    shell:
+        "snakemake --forceall --dag | dot -Tsvg > {output}"
 
 rule structural_mapping:
     input:

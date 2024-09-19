@@ -8,8 +8,3 @@ dependencies:
   - icu
   - r-stringi
   - pandoc
-  - r-ggplot2
-  - r-dplyr
-  - r-tidyr
-  - r-readr
-  - r-rmarkdown

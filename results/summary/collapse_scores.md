@@ -3,12 +3,14 @@ Collapse barcodes to final per-scFv/mutant phenotype scores
 Tyler Starr
 08/06/2021
 
-- [Setup](#setup)
-- [Calculate per-variant mean scores within
-  replicates](#calculate-per-variant-mean-scores-within-replicates)
-- [Calculate per-mutant score across
-  libraries](#calculate-per-mutant-score-across-libraries)
-- [Heatmaps!](#heatmaps)
+- <a href="#setup" id="toc-setup">Setup</a>
+- <a href="#calculate-per-variant-mean-scores-within-replicates"
+  id="toc-calculate-per-variant-mean-scores-within-replicates">Calculate
+  per-variant mean scores within replicates</a>
+- <a href="#calculate-per-mutant-score-across-libraries"
+  id="toc-calculate-per-mutant-score-across-libraries">Calculate
+  per-mutant score across libraries</a>
+- <a href="#heatmaps" id="toc-heatmaps">Heatmaps!</a>
 
 This notebook reads in the per-barcode titration Kds and expression
 measurements from the `compute_binding_Kd` and
@@ -20,6 +22,7 @@ generates some coverage and QC analyses.
 require("knitr")
 knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
+options(repos = c(CRAN = "https://cran.r-project.org"))
 
 #list of packages to install/load
 packages = c("yaml","data.table","tidyverse","gridExtra","seqinr")
@@ -46,12 +49,12 @@ Session info for reproducing environment:
 sessionInfo()
 ```
 
-    ## R version 3.6.2 (2019-12-12)
-    ## Platform: x86_64-pc-linux-gnu (64-bit)
+    ## R version 3.6.3 (2020-02-29)
+    ## Platform: x86_64-conda-linux-gnu (64-bit)
     ## Running under: Ubuntu 18.04.6 LTS
     ## 
     ## Matrix products: default
-    ## BLAS/LAPACK: /app/software/OpenBLAS/0.3.7-GCC-8.3.0/lib/libopenblas_haswellp-r0.3.7.so
+    ## BLAS/LAPACK: /fh/fast/matsen_e/jgallowa/Ab-CGGnaive_DMS/.snakemake/conda/2d5cf4fed99e91ae882f671993d1c07c_/lib/libopenblasp-r0.3.27.so
     ## 
     ## locale:
     ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -65,25 +68,25 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] seqinr_3.6-1      gridExtra_2.3     forcats_0.4.0     stringr_1.4.0    
-    ##  [5] dplyr_0.8.3       purrr_0.3.3       readr_1.3.1       tidyr_1.0.0      
-    ##  [9] tibble_3.0.1      ggplot2_3.3.0     tidyverse_1.3.0   data.table_1.12.8
-    ## [13] yaml_2.2.0        knitr_1.26       
+    ##  [1] seqinr_4.2-36     gridExtra_2.3     forcats_0.5.1     stringr_1.4.0    
+    ##  [5] dplyr_1.0.6       purrr_0.3.4       readr_1.4.0       tidyr_1.1.3      
+    ##  [9] tibble_3.1.2      ggplot2_3.3.3     tidyverse_1.3.1   data.table_1.14.0
+    ## [13] yaml_2.2.1        knitr_1.33       
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] tidyselect_0.2.5 xfun_0.11        haven_2.2.0      lattice_0.20-38 
-    ##  [5] colorspace_1.4-1 vctrs_0.2.4      generics_0.0.2   htmltools_0.4.0 
-    ##  [9] rlang_0.4.5      pillar_1.4.3     glue_1.3.1       withr_2.1.2     
-    ## [13] DBI_1.1.0        dbplyr_1.4.2     modelr_0.1.5     readxl_1.3.1    
-    ## [17] lifecycle_0.2.0  munsell_0.5.0    gtable_0.3.0     cellranger_1.1.0
-    ## [21] rvest_0.3.5      evaluate_0.14    fansi_0.4.0      broom_0.5.6     
-    ## [25] Rcpp_1.0.3       scales_1.1.0     backports_1.1.5  jsonlite_1.6    
-    ## [29] fs_1.3.1         hms_0.5.2        digest_0.6.23    stringi_1.4.3   
-    ## [33] ade4_1.7-13      grid_3.6.2       cli_2.0.0        tools_3.6.2     
-    ## [37] magrittr_1.5     crayon_1.3.4     pkgconfig_2.0.3  MASS_7.3-51.4   
-    ## [41] ellipsis_0.3.0   xml2_1.2.2       reprex_0.3.0     lubridate_1.7.4 
-    ## [45] assertthat_0.2.1 rmarkdown_2.0    httr_1.4.1       rstudioapi_0.10 
-    ## [49] R6_2.4.1         nlme_3.1-143     compiler_3.6.2
+    ##  [1] tidyselect_1.1.1  xfun_0.23         haven_2.4.1       colorspace_2.0-1 
+    ##  [5] vctrs_0.3.8       generics_0.1.0    htmltools_0.5.1.1 utf8_1.2.1       
+    ##  [9] rlang_0.4.11      pillar_1.6.1      glue_1.4.2        withr_2.4.2      
+    ## [13] DBI_1.1.1         dbplyr_2.1.1      modelr_0.1.8      readxl_1.3.1     
+    ## [17] lifecycle_1.0.0   munsell_0.5.0     gtable_0.3.0      cellranger_1.1.0 
+    ## [21] rvest_1.0.0       evaluate_0.14     ps_1.6.0          fansi_0.4.2      
+    ## [25] broom_0.7.6       Rcpp_1.0.13       scales_1.1.1      backports_1.2.1  
+    ## [29] jsonlite_1.7.2    fs_1.5.0          hms_1.1.0         digest_0.6.27    
+    ## [33] stringi_1.6.2     ade4_1.7-22       grid_3.6.3        cli_2.5.0        
+    ## [37] tools_3.6.3       magrittr_2.0.1    crayon_1.4.1      pkgconfig_2.0.3  
+    ## [41] MASS_7.3-54       ellipsis_0.3.2    xml2_1.3.2        reprex_2.0.0     
+    ## [45] lubridate_1.7.10  assertthat_0.2.1  rmarkdown_2.8     httr_1.4.2       
+    ## [49] rstudioapi_0.13   R6_2.5.0          compiler_3.6.3
 
 ## Setup
 
