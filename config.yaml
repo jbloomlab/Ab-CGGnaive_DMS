@@ -1,7 +1,7 @@
 # config for analysis
 
 # conda environment file
-environment: environment.yml
+# environment: environment.yml
 
 # most CPUs to ever use at once
 max_cpus: 8
@@ -33,6 +33,7 @@ primary_target: CGG_naive
 #cryo-EM refined structure of CGGnaive bound to CGG (two complexes)
 pdb: data/IgY-CH2_EH2_final_real_space_refined_021.pdb
 
+
 # output directories / files
 summary_dir: results/summary
 figs_dir: results/figures
@@ -55,11 +56,60 @@ final_variant_scores_dir: results/final_variant_scores
 final_variant_scores_mut_file: results/final_variant_scores/final_variant_scores.csv
 structural_mapping_dir: results/structural_mapping
 
+
+
 # parameters for running PacBio `ccs` program
 min_ccs_accuracy: 0.999
 min_ccs_passes: 3
 min_ccs_length: 50
 max_ccs_length: 5000
+
+#####################
+# improved_kd_fitting
+#####################
+
+# TODO: this is downstream of the existing pipeline that creates (and tracks) the necessary barcode 
+# counts and annotations for our fitting needs.
+# see the `improved_kd_fitting` rule (or the dag) for all inputs needed - seems like there's
+# a lot files being taken in for comparison that aren't strickly necessary 
+# for a singular modeling step, namely:
+
+
+# Aggregated counts output
+aggregated_counts_dir: results/aggregated_counts
+prepped_variant_counts_file: results/aggregated_counts/prepped_variant_counts.csv
+prepped_barcode_counts_file: results/aggregated_counts/prepped_barcode_counts.csv
+
+# FACS file pattern for Titeseq-modeling.ipynb
+facs_file_pattern: exptl_data/210624_TiteSeq_CGG/FCS_scFvpos/Specimen_001_sample_*
+
+new_final_variant_scores_dir: results/Titeseq_modeling
+
+## HERE 
+# old_final_variant_scores_mut_file: *final_variant_scores_mut_file
+# TODO global replace improved_Kd_fitting with "" to replace old approach
+new_final_variant_scores_mut_file: results/Titeseq_modeling/final_variant_scores.csv
+
+# TODO so we still would need to merge this final mut variant stuff
+# into the structural componant, yes? or no?
+
+concentrations:
+  CGG: [1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-12, 1e-13, 0]
+  # TODO: wait I think TuGG number is not sequential, it skips eight?
+  # TuGG: [1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-12, 0]
+
+# we're assuming bins are sequentially numbered, starting at 1
+# so if the len(facs_boundaries) = n, then there are n-1 bins
+# TODO, how were these calculated? maybe in the R markdown?
+# or, is will giving the formulation in the Model elaborations -> Flurescense bins?
+bins:
+  CGG: [-288., 136., 2000., 29421., 262143.]
+  # TuGG: null # There are no fluroescent boundaries defined for TuGG in the Rmd.
+
+
+###################
+###################
+
 
 # max error rate in gene / barcode CCSs retained for consensu building
 max_error_rate: 0.0001

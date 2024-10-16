@@ -13,9 +13,17 @@ The analysis consists of three components, all of which are contained in this re
 
  1. Instructions to build the computing environment.
 
- 2. The computer code itself.
+ 2. The computer code itself, primarily in the form of a Snakefile, Jupyter notebooks, and R markdown scripts.
 
- 3. The required input data.
+ 3. The required [variant counts]() input data to run the pipeline steps, downstream from the [count_variants rule](). 
+ 
+ Note the sequencing data is not included in this repository and thus the processing of the ccs and the variants counts step are not able to be run from the data
+
+We let `snakemake` conda functionality handle the environment setup, so all you need is an environment with `snakemake` and `git-lfs` installed.
+Ensure you have `conda` installed; if not install it via Miniconda as described [here]() .
+The environment is specified in [environment.yml](environment.yml).
+
+    conda create --name Ab-CGGnaive_DMS -y
 
 First, set up the computing environment, which is partially done via `conda`.
 Ensure you have `conda` installed; if not install it via Miniconda as described [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/#regular-installation).
