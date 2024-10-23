@@ -1,0 +1,11 @@
+name: my_r_env
+channels:
+  - conda-forge
+dependencies:
+  - r-base=3.6.3
+  - r-essentials
+  - r-languageserver
+  - r-fitdistrplus
+  - icu
+  - r-stringi
+  - pandoc

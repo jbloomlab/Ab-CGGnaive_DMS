@@ -1,5 +1,7 @@
 results/variants/codon_variant_table.csv filter=lfs diff=lfs merge=lfs -text
 results/counts/variant_counts.csv filter=lfs diff=lfs merge=lfs -text
+results/aggregated_counts/prepped_variant_counts.csv filter=lfs diff=lfs merge=lfs -text
+results/aggregated_counts/prepped_barcode_counts.csv filter=lfs diff=lfs merge=lfs -text
 results/expression_meanFs/expression_meanFs.csv filter=lfs diff=lfs merge=lfs -text
 results/expression_meanFs/expression_meanFs_homologs.csv filter=lfs diff=lfs merge=lfs -text
 results/binding_Kds/binding_Kds.csv filter=lfs diff=lfs merge=lfs -text
@@ -14,3 +16,6 @@ results/expression_meanF/bc_expression.csv filter=lfs diff=lfs merge=lfs -text
 results/final_variant_scores/final_variant_scores.csv filter=lfs diff=lfs merge=lfs -text
 results/PSR_EC50/bc_polyspecificity.csv filter=lfs diff=lfs merge=lfs -text
 results/PSR_bind/bc_polyspecificity.csv filter=lfs diff=lfs merge=lfs -text
+# temporary for titeseq modeling prototype
+tite-seq-modeling/output/final_variant_scores.csv filter=lfs diff=lfs merge=lfs -text
+tite-seq-modeling/tite-seq-modeling.ipynb filter=strip-notebook-metadata diff=strip-notebook-metadata

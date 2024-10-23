@@ -15,6 +15,7 @@ This notebook reads in per-barcode counts from `count_variants.ipynb` for CGG-bi
 require("knitr")
 knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
+options(repos = c(CRAN = "https://cran.r-project.org"))
 
 #list of packages to install/load
 packages = c("yaml","data.table","tidyverse","gridExtra")
