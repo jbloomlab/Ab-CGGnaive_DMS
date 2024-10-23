@@ -1,14 +1,10 @@
-name: titeseq
+name: prep_barcodes
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - git-lfs
   - python=3.12
-  - jax
-  - jaxopt
   - pandas
   - numpy
   - jupyter
   - jupyter_contrib_nbextensions
-  - pip

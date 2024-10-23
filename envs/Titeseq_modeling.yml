@@ -1,9 +1,8 @@
-name: titeseq
+name: titeseq_modeling
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - git-lfs
   - python=3.12
   - fcsparser
   - jax
@@ -12,4 +11,3 @@ dependencies:
   - pandas
   - jupyter
   - jupyter_contrib_nbextensions
-  - pip
