@@ -4,48 +4,33 @@ Analysis of deep mutational scanning of barcoded codon variants of CGGnaive anti
 
 Study and analysis by Tyler Starr, [Jesse Bloom](https://research.fhcrc.org/bloom/en.html), and co-authors.
 
+Code refactored to integrate improved Kd modeling by Jared Galloway, and Will DeWitt.
+
 ## Summary of workflow and results
+
 For a summary of the workflow and links to key results files, [click here](results/summary/summary.md).
 Reading this summary is the best way to understand the analysis.
 
-## Running the analysis
-The analysis consists of three components, all of which are contained in this repository:
+## Running the analysis on a single machine (recommended)
 
- 1. Instructions to build the computing environment.
+Note the sequencing data is not included in this repository and thus the processing of the ccs and the variants counts step are not able to be run from the data. We track the output files for these steps, and thus you can run the pipeline to completion downstream of these steps.
 
- 2. The computer code itself.
+We let `snakemake` conda functionality handle the environment setup, so all you need is an environment with `snakemake` and `git-lfs` installed. We reccomend following [these instructions first](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html#installation-via-conda-mamba), then running the following commands:
 
- 3. The required input data.
+```
+conda activate snakemake
+conda install git-lfs
+git clone https://github.com/jbloomlab/Ab-CGGnaive_DMS.git
+cd Ab-CGGnaive_DMS
+git lfs install
+```
 
-First, set up the computing environment, which is partially done via `conda`.
-Ensure you have `conda` installed; if not install it via Miniconda as described [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/#regular-installation).
-The environment is specified in [environment.yml](environment.yml).
-If you have not previously built the conda environment, then build the environment specified in [environment.yml](environment.yml) to `./env` with:
+Then you can run the pipeline with the following command:
 
-    conda env create -f environment.yml -p ./env
+```
+snakemake -j8 --use-conda
+```
 
-Then activate it with:
-
-    conda activate ./env
-
-If you've previously built the environment into `./env`, just do the activation step.
-
-Setting up the `conda` environment above installs everything to run all parts of the analysis **except** the `R` markdown notebooks.
-For those, the pipeline currently uses the Fred Hutch computing cluster module `R/3.6.2-foss-2019b` as specified in `Snakefile`.
-That module is not packaged with this repo, so if you aren't on the Fred Hutch cluster you'll have to create a similar `R` environment yourself (all the `R` packages are listed at the beginning of their output in the [summary results](results/summary/summary.md).
-
-Now you can run the entire analysis.
-The analysis consists primarily of a series of Jupyter notebooks and R markdown in to the top-level directory along with some additional code in [Snakefile](Snakefile).
-You can run the analysis by using [Snakemake](https://snakemake.readthedocs.io) to run [Snakefile](Snakefile), specifying the conda environment in `./env`, as in:
-
-    snakemake --use-conda --conda-prefix ./env
-
-However, you probably want to use the server to help with computationally intensive parts of the analysis.
-To run using the cluster configuration for the Fred Hutch server, simply run the bash script [run_Hutch_cluster.bash](run_Hutch_cluster.bash), which executes [Snakefile](Snakefile) in a way that takes advantage of the Hutch server resources.
-This bash script also automates the environment building steps above, so really all you have to do is run this script.
-You likely want to submit [run_Hutch_cluster.bash](run_Hutch_cluster.bash) itself to the cluster (since it takes a while to run) with:
-
-    sbatch -t 7-0 run_Hutch_cluster.bash
 
 ### Configure `.git` to not track Jupyter notebook metadata
 To simplify git tracking of Jupyter notebooks, we have added the filter described [here](https://stackoverflow.com/questions/28908319/how-to-clear-an-ipython-notebooks-output-in-all-cells-from-the-linux-terminal/58004619#58004619) to strip notebook metadata to [.gitattributes](.gitattributes) and [.gitconfig](.gitconfig).
@@ -64,7 +49,14 @@ The input files pointed to by [config.yaml](config.yaml) are in the [./data/](da
 See the [./data/README.md](./data/README.md) file for details.
 
 
-## Cluster configuration
+## Cluster configuration (untested since [#13](https://github.com/jbloomlab/Ab-CGGnaive_DMS/pull/13))
+
+To run using the cluster configuration for the Fred Hutch server, simply run the bash script [run_Hutch_cluster.bash](run_Hutch_cluster.bash), which executes [Snakefile](Snakefile) in a way that takes advantage of the Hutch server resources.
+This bash script also automates the environment building steps above, so really all you have to do is run this script.
+You likely want to submit [run_Hutch_cluster.bash](run_Hutch_cluster.bash) itself to the cluster (since it takes a while to run) with:
+
+    sbatch -t 7-0 run_Hutch_cluster.bash
+
 There is a cluster configuration file [cluster.yaml](cluster.yaml) that configures [Snakefile](Snakefile) for the Fred Hutch cluster, as recommended by the [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html).
 The [run_Hutch_cluster.bash](run_Hutch_cluster.bash) script uses this configuration to run [Snakefile](Snakefile).
 If you are using a different cluster than the Fred Hutch one, you may need to modify the cluster configuration file.
@@ -96,8 +88,6 @@ Then the large results files were added for tracking with:
 git lfs track results/variants/codon_variant_table.csv
 git lfs track results/counts/variant_counts.csv
 git lfs track results/binding_Kd/bc_binding.csv
-git lfs track results/PSR_bind/bc_polyspecificity.csv
-git lfs track results/expression_meanF/bc_expression.csv
 git lfs track results/final_variant_scores/final_variant_scores.csv
 ```
 

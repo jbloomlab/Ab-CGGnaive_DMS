@@ -1,5 +1,5 @@
 ---
-title: "Compute per-barcode expression functional score"
+title: "Compute per-variant expression functional score"
 author: "Tyler Starr"
 date: "8/6/2021"
 output:
@@ -14,6 +14,7 @@ This notebook reads in per-barcode counts from `count_variants.ipynb` for expres
 require("knitr")
 knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
+options(repos = c(CRAN = "https://cran.r-project.org"))
 
 #list of packages to install/load
 packages = c("yaml","data.table","tidyverse","fitdistrplus","gridExtra")
@@ -39,60 +40,46 @@ sessionInfo()
 ```
 
 ## Setup
-First, we will read in metadata on our sort samples, the table giving number of reads of each barcode in each of the sort bins, and the barcode-variant lookup tables, and merge these tables together.
 
-```{r input_data}
-#read dataframe with list of barcode runs
-barcode_runs <- read.csv(file=config$barcode_runs,stringsAsFactors=F); barcode_runs <- subset(barcode_runs, select=-c(R1))
+```{r test_prepped}
+pdt <- data.table(read.csv(file=config$prepped_variant_counts_file,stringsAsFactors=F))
+# retain all rows where 'SortSeq' is in the 'sample' string
+pdt <- pdt[grepl("SortSeq", sample)]
+# rename columns: 
+# read_count -> count, 
+# estimated_cell_count -> count.norm, 
+# variants -> aa_substitutions, 
+# barcode -> variant_call_support, 
+# bin -> sample
+setnames(
+  pdt, 
+  c("read_count", "estimated_cell_count", "variant", "barcode"), 
+  c("count", "count.norm", "aa_substitutions", "n_bc_expr")
+)
+# assign a column "target" with all values equal to "CGG_naive"
+pdt[, target := "CGG_naive"]
 
-#eliminate rows from barcode_runs that are not from an expression sort-seq experiment
-barcode_runs <- barcode_runs[barcode_runs$sample_type == "SortSeq",]
-
-#read file giving count of each barcode in each sort partition
-counts <- data.table(read.csv(file=config$variant_counts_file,stringsAsFactors=F))
-
-#eliminate rows from counts that are not part of an expression sort-seq bin
-counts <- subset(counts, sample %in% barcode_runs[barcode_runs$sample_type=="SortSeq","sample"])
-
-#read in barcode-variant lookup tables
-dt <- data.table(read.csv(file=config$codon_variant_table_file,stringsAsFactors=F))
-
-dt <- merge(counts, dt, by=c("library","barcode"));rm(counts)
-
+pdt[,variant_class:=as.character(NA)]
+pdt[n_aa_substitutions==0, variant_class := "wildtype"]
+# note that we've dropped all synonymous variants with silent mutations in the prep stage.
+pdt[n_aa_substitutions>0 & grepl("*",aa_substitutions,fixed=T), variant_class := "stop"]
+pdt[n_aa_substitutions == 1 & !grepl("*",aa_substitutions,fixed=T), variant_class := "1 nonsynonymous"]
+pdt[n_aa_substitutions > 1 & !grepl("*",aa_substitutions,fixed=T), variant_class := ">1 nonsynonymous"]
 ```
- Convert from Illumina read counts to estimates of the number of cells that were sorted into a bin, and add some other useful information to our data frame.
- 
-```{r downweight_counts_by_cells}
-#for each bin, normalize the read counts to the observed ratio of cell recovery among bins
-for(i in 1:nrow(barcode_runs)){
-  lib <- as.character(barcode_runs$library[i])
-  bin <- as.character(barcode_runs$sample[i])
-  ratio <- sum(dt[library==lib & sample==bin,"count"])/barcode_runs$number_cells[i]
-  if(ratio<1){ #if there are fewer reads from a sortseq bin than cells sorted
-    dt[library==lib & sample==bin, count.norm := as.numeric(count)] #don't normalize cell counts, make count.norm the same as count
-    print(paste("reads < cells for",lib,bin,", un-normalized (ratio",ratio,")")) #print to console to inform of undersampled bins
-  }else{
-    dt[library==lib & sample==bin, count.norm := as.numeric(count/ratio)] #normalize read counts by the average read:cell ratio, report in new "count.norm" column
-    print(paste("read:cell ratio for",lib,bin,"is",ratio))
-  }
-}
 
-#annotate each barcode as to whether it's a homolog variant, SARS-CoV-2 wildtype, synonymous muts only, stop, nonsynonymous, >1 nonsynonymous mutations
-dt[,variant_class:=as.character(NA)]
-dt[n_codon_substitutions==0, variant_class := "wildtype"]
-dt[n_codon_substitutions > 0 & n_aa_substitutions==0, variant_class := "synonymous"]
-dt[n_aa_substitutions>0 & grepl("*",aa_substitutions,fixed=T), variant_class := "stop"]
-dt[n_aa_substitutions == 1 & !grepl("*",aa_substitutions,fixed=T), variant_class := "1 nonsynonymous"]
-dt[n_aa_substitutions > 1 & !grepl("*",aa_substitutions,fixed=T), variant_class := ">1 nonsynonymous"]
 
+
+```{r }
 #cast the data frame into wide format
-dt <- dcast(dt, library + barcode + target + variant_class + aa_substitutions + n_aa_substitutions ~ sample, value.var="count.norm")
+pdt <- dcast(pdt, library + target + variant_class + aa_substitutions + n_aa_substitutions + n_bc_expr ~ sample, value.var="count.norm")
+```
 
+```{r }
 #add total count corresponding to count across the four bins for each barcode
-dt[,expr_count := sum(SortSeq_bin1,SortSeq_bin2,SortSeq_bin3,SortSeq_bin4),by=c("library","barcode")]
+pdt[,expr_count := sum(SortSeq_bin1,SortSeq_bin2,SortSeq_bin3,SortSeq_bin4),by=c("library","aa_substitutions")]
 
 #add indicator if count>1 in >1 bin
-dt[,total_bins_w_count := sum(.(SortSeq_bin1,SortSeq_bin2,SortSeq_bin3,SortSeq_bin4)>0),by=c("library","barcode")]
+pdt[,total_bins_w_count := sum(.(SortSeq_bin1,SortSeq_bin2,SortSeq_bin3,SortSeq_bin4)>0),by=c("library","aa_substitutions")]
 ```
 
 ## Calculating mean fluorescence
@@ -111,54 +98,53 @@ calc.MLmean <- function(b1,b2,b3,b4,min.b1,min.b2,min.b3,min.b4,max.b4,min.count
 }
 
 #fit ML mean and sd fluorescence for each barcode, and calculate total cell count as the sum across the four bins. Multiply cell counts by a factor of 20 to minimize rounding errors since fitdistcens requires rounding to integer inputs
-invisible(dt[library=="lib1",c("expression","ML_sdF") := tryCatch(calc.MLmean(b1=SortSeq_bin1*20,b2=SortSeq_bin2*20,
+invisible(pdt[library=="lib1",c("expression","ML_sdF") := tryCatch(calc.MLmean(b1=SortSeq_bin1*20,b2=SortSeq_bin2*20,
                                                                       b3=SortSeq_bin3*20,b4=SortSeq_bin4*20,
                                                                       min.b1=log(20),min.b2=log(645.5),min.b3=log(15584.5),
                                                                       min.b4=log(33302.5),max.b4=log(229000)),
-                                                          error=function(e){return(list(as.numeric(NA),as.numeric(NA)))}),by=c("library","barcode")])
-invisible(dt[library=="lib2",c("expression","ML_sdF") := tryCatch(calc.MLmean(b1=SortSeq_bin1*20,b2=SortSeq_bin2*20,
+                                                          error=function(e){return(list(as.numeric(NA),as.numeric(NA)))}),by=c("library","aa_substitutions")])
+invisible(pdt[library=="lib2",c("expression","ML_sdF") := tryCatch(calc.MLmean(b1=SortSeq_bin1*20,b2=SortSeq_bin2*20,
                                                                       b3=SortSeq_bin3*20,b4=SortSeq_bin4*20,
                                                                       min.b1=log(20),min.b2=log(645.5),min.b3=log(15584.5),
                                                                       min.b4=log(33302.5),max.b4=log(229000)),
-                                                          error=function(e){return(list(as.numeric(NA),as.numeric(NA)))}),by=c("library","barcode")])
+                                                          error=function(e){return(list(as.numeric(NA),as.numeric(NA)))}),by=c("library","aa_substitutions")])
 
 #save temp data file for downstream troubleshooting since the ML meanF took >1hr to calculate -- don't use these for final anlaysis though for reproducibility!
-save(dt,file=paste(config$expression_sortseq_dir,"/dt.temp.Rda",sep=""))
+save(pdt,file=paste(config$expression_sortseq_dir,"/dt.temp.Rda",sep=""))
 ```
+
 ## Basic plotting and QC
 
 Let's look at the distibution of expression scores by variant class for each library.
 
 ```{r unfiltered_expression_distribution, echo=T, fig.width=7, fig.height=5, fig.align="center", dpi=300,dev="png"}
 #histogram of mean F, separated by class
-hist(dt[variant_class %in% (c("1 nonsynonymous",">1 nonsynonymous")),expression],col="gray40",main="",breaks=50,xlab="ML mean fluorescence (a.u.)")
-hist(dt[variant_class %in% (c("synonymous","wildtype")),expression],col="#92278F",add=T,breaks=50)
-hist(dt[variant_class %in% (c("stop")),expression],col="#BE1E2D",add=T,breaks=50)
+hist(pdt[variant_class %in% (c("1 nonsynonymous",">1 nonsynonymous")),expression],col="gray40",main="",breaks=50,xlab="ML mean fluorescence (a.u.)")
+hist(pdt[variant_class %in% (c("wildtype")),expression],col="#92278F",add=T,breaks=50)
+hist(pdt[variant_class %in% (c("stop")),expression],col="#BE1E2D",add=T,breaks=50)
 ```
 
 Next let's look at the distributon of cell counts across the four bins for each barcode, for those for which estimates were generated on the bottom. 
 ```{r cell_count_coverage, echo=T, fig.width=10, fig.height=10, fig.align="center", dpi=300,dev="png"}
 #histograms
 par(mfrow=c(2,2))
-hist(log10(dt[library=="lib1",expr_count]+0.1),xlab="cell count (log10, plus 0.1 pseudocount)",main="lib1, all bc",col="gray50")
-hist(log10(dt[library=="lib2",expr_count]+0.1),xlab="cell count (log10, plus 0.1 pseudocount)",main="lib2, all bc",col="gray50")
-hist(log10(dt[library=="lib1" & !is.na(expression),expr_count]+0.1),xlab="cell count (log10, plus 0.1 pseudocount)",main="lib1, determined",col="gray50")
-hist(log10(dt[library=="lib2" & !is.na(expression),expr_count]+0.1),xlab="cell count (log10, plus 0.1 pseudocount)",main="lib2, determined",col="gray50")
-
+hist(log10(pdt[library=="lib1",expr_count]+0.1),xlab="cell count (log10, plus 0.1 pseudocount)",main="lib1, all bc",col="gray50")
+hist(log10(pdt[library=="lib2",expr_count]+0.1),xlab="cell count (log10, plus 0.1 pseudocount)",main="lib2, all bc",col="gray50")
+hist(log10(pdt[library=="lib1" & !is.na(expression),expr_count]+0.1),xlab="cell count (log10, plus 0.1 pseudocount)",main="lib1, determined",col="gray50")
+hist(log10(pdt[library=="lib2" & !is.na(expression),expr_count]+0.1),xlab="cell count (log10, plus 0.1 pseudocount)",main="lib2, determined",col="gray50")
 ```
 Filter out expression measurements determined from <10 estimated cells
 
 ```{r filter_min_cfu}
-min_count <- 10
-dt[expr_count<min_count, c("expression","ML_sdF","expr_count") := NA]
-
+min_count <- config$min_Sortseq_reads_per_variant
+pdt[expr_count<min_count, c("expression","ML_sdF","expr_count") := NA]
 ```
 
 
 Do as violin plots, faceted by each target. In next notebook, we'll evaluate count depth and possibly apply further filtering to remove low-count expression estimates
 
 ```{r expression_distribution_vioplot, echo=T, fig.width=6, fig.height=4.5, fig.align="center", dpi=300,dev="png"}
-p1 <- ggplot(dt[!is.na(expression),],aes(x=variant_class,y=expression))+
+p1 <- ggplot(pdt[!is.na(expression),],aes(x=variant_class,y=expression))+
   geom_violin(scale="width")+stat_summary(fun=median,geom="point",size=1)+
   ggtitle("expression")+xlab("variant class")+theme(axis.text.x=element_text(angle=-90,hjust=0))+
   facet_wrap(~target,nrow=4)
@@ -169,18 +155,17 @@ grid.arrange(p1,ncol=1)
 invisible(dev.print(pdf, paste(config$expression_sortseq_dir,"/violin-plot_meanF-by-target.pdf",sep="")))
 ```
 
-We have generated expression measurements for `r round(nrow(dt[!is.na(expression)])/nrow(dt)*100,digits=2)`% of the barcodes in our libraries.
+We have generated expression measurements for `r round(nrow(pdt[!is.na(expression)])/nrow(pdt)*100,digits=2)`% of the barcodes in our libraries.
 
 ## Data Output
 
 Finally, let's output our measurements for downstream analyses.
 
 ```{r output_data}
-dt[,.(library,barcode,target,variant_class,aa_substitutions,n_aa_substitutions,
+pdt[,.(library,target,variant_class,aa_substitutions,n_aa_substitutions,n_bc_expr,
      expr_count,expression)] %>%
   mutate_if(is.numeric, round, digits=6) %>%
   write.csv(file=config$expression_sortseq_file, row.names=F)
-
 ```
 
 

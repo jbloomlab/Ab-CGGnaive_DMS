@@ -1,31 +1,11 @@
-# Summary
-
 Analysis run by [Snakefile](../../Snakefile)
 using [this config file](../../config.yaml).
 See the [README in the top directory](../../README.md)
-for details.
-
-Here is the DAG of the computational workflow:
-![dag.svg](dag.svg)
-
-Here is the Markdown output of each Jupyter notebook in the
-workflow:
-
+![../../dag.png](../../dag.png)
 1. [Process PacBio CCSs](process_ccs.md). Creates a [barcode-variant lookup table](../variants/codon_variant_table.csv).
-
-2. [Count variants by barcode](count_variants.md).
-   Creates a [variant counts file](../counts/variant_counts.csv)
-   giving counts of each barcoded variant in each condition.
-
-3. [Fit CGG-binding titration curves](compute_binding_Kd.md) to calculate per-barcode K<sub>D</sub>, recorded in [this file](../binding_Kd/bc_binding.csv).
-
-4. [Fit TuGG-binding titration curves](compute_binding_Kd_TuGG.md) to calculate per-barcode K<sub>D</sub>, recorded in [this file](../binding_Kd/bc_binding_TuGG.csv).
-
-5. [Fit polyspecificity reagent binding Sort-seq](compute_binding_PSR.md) to calculate per-barcode polyspecificity score, recorded in [this file](../PSR_bind/bc_polyspecificity.csv).
-
-6. [Analyze Sort-seq](compute_expression_meanF.md) to calculate per-barcode RBD expression, recorded in [this file](../expression_meanF/bc_expression.csv).
-
-7. [Derive final genotype-level phenotypes from replicate barcoded sequences](collapse_scores.md).
-   Generates final phenotypes, recorded in [this file](../final_variant_scores/final_variant_scores.csv).
-
-   8. [Map DMS phenotypes to the CGG-bound antibody structure](structural_mapping.md).
+2. [Count variants by barcode](count_variants.md). Creates a [variant counts file](../counts/variant_counts.csv) giving counts of each barcoded variant in each condition.
+3. [Normalize, filter, aggregate barcodes](normalize_filter_aggregate_barcodes.md) produces [prepped barcode counts](../aggregated_counts/prepped_barcode_counts.csv) and [prepped variant counts](../aggregated_counts/prepped_variant_counts.csv). These are the barcode and variant counts after merging substitution annotations, normalizing counts, filtering variants, and aggregating (for variant counts) barcode counts.
+4. [Tite-seq modeling](Titeseq-modeling.md). This notebook fits a model to the Tite-seq data to estimate the binding affinity (Kd) of each variant to the CGG antibody. The results are recorded in the [variant Kds file](../binding_Kd/variant_binding.csv).
+5. [Analyze Sort-seq](compute_expression_meanF.md) to calculate per-variant RBD expression, recorded in [this file](../expression_meanF/variant_expression.csv).
+6. [Collapse scores](collapse_scores.md) merges and analyzes the phenotype data. The results are recorded in the final variant scores mut file [here](../final_variant_scores/final_variant_scores.csv).
+7. [Map DMS phenotypes to the CGG-bound antibody structure](structural_mapping.md).
