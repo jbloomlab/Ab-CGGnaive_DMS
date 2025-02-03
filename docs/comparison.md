@@ -7,7 +7,7 @@ permalink: /metric-comparison/
 
 ### Overview 
 
-You can use this tool to explore the relationship between binding affinity (-log10 $$K_D$$), expression (log10 $$MFI$$), and polyspecificity for all anti-CGG naive antibody variants. You can select the antibody regions and residue transitions of particular interest.
+You can use this tool to explore the relationship between binding affinity (-log10 $$K_D$$) and expression (log10 $$MFI$$) for all anti-CGG naive antibody variants. You can select the antibody regions and residue transitions of particular interest.
 
 #### Instructions
 
