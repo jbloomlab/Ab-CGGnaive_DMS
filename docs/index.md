@@ -13,9 +13,9 @@ This is an analysis of deep mutational scanning of barcoded codon variants of an
 
 We have made two tools to help visualize the data from our deep mutational scans:
 
-1. A set of interactive heatmaps that you can use to explore the change in binding affinity ($$\Delta$$log10 $$K_D$$), expression (log10 $$MFI$$), and polyspecifity caused by mutations in each CGGnaive antibody variant. To use this tool, click [here]({{ site.baseurl }}{% link heatmaps.md %}).
+1. A set of interactive heatmaps that you can use to explore the change in binding affinity ($$\Delta$$log10 $$K_D$$), and expression (log10 $$MFI$$) caused by mutations in each CGGnaive antibody variant. To use this tool, click [here]({{ site.baseurl }}{% link heatmaps.md %}).
 
-2. An interactive widget that you can use to visualize the relationship between binding affinity (-log10 $$K_D$$), expression (log10 $$MFI$$), and polyspecificity between variant CGGnaive antibodies. To use this tool, click [here]({{ site.baseurl }}{% link comparison.md %}).  
+2. An interactive widget that you can use to visualize the relationship between binding affinity (-log10 $$K_D$$), and expression (log10 $$MFI$$) between variant CGGnaive antibodies. To use this tool, click [here]({{ site.baseurl }}{% link comparison.md %}).  
 
 ### Data
 
