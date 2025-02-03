@@ -194,6 +194,21 @@ x <- dt_mutant[library=="lib1" & wildtype!=mutant & !(position %in% 113:127),exp
 invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/replicate_correlations.pdf",sep=""),useDingbats=F))
 ```
 
+Same as above, but for delta values.
+
+``` r
+par(mfrow=c(1,2))
+x <- dt_mutant[library=="lib1" & wildtype!=mutant & !(position %in% 113:127),delta_bind_CGG]; y <- dt_mutant[library=="lib2" & wildtype!=mutant  & !(position %in% 113:127),delta_bind_CGG]; plot(x,y,pch=16,col="#00000020",xlab="replicate 1",ylab="replicate 2",main="CGG binding affinity");model <- lm(y~x);abline(model,lty=2,col="red");legend("topleft",legend=paste("R2: ",round(summary(model)$r.squared,3),sep=""),bty="n")
+
+x <- dt_mutant[library=="lib1" & wildtype!=mutant & !(position %in% 113:127),delta_expr]; y <- dt_mutant[library=="lib2" & wildtype!=mutant & !(position %in% 113:127),delta_expr]; plot(x,y,pch=16,col="#00000020",xlab="replicate 1",ylab="replicate 2",main="expr");model <- lm(y~x);abline(model,lty=2,col="red");legend("topleft",legend=paste("R2: ",round(summary(model)$r.squared,3),sep=""),bty="n")
+```
+
+<img src="collapse_scores_files/figure-gfm/plot_correlations_delta-1.png" style="display: block; margin: auto;" />
+
+``` r
+invisible(dev.print(pdf, paste(config$final_variant_scores_dir,"/replicate_delta_correlations.pdf",sep=""),useDingbats=F))
+```
+
 ## Calculate per-mutant score across libraries
 
 Collapse down to mean from both replicates, and total n barcodes between
